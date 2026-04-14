@@ -1,0 +1,49 @@
+#!/bin/bash
+# wiki/ 오염 방지 가드
+# wiki/ 파일이 staged된 경우 경고를 출력합니다.
+#
+# 우회 방법 (Claude Code 커밋 등 의도적 수정 시):
+#   ALLOW_WIKI_EDIT=1 git commit -m "..."
+
+# 우회 플래그 확인
+if [ "${ALLOW_WIKI_EDIT}" = "1" ]; then
+  exit 0
+fi
+
+# staged된 wiki/ 파일 목록 추출
+WIKI_STAGED=$(git diff --cached --name-only | grep "^wiki/" | grep -v "^wiki/_meta/" | grep "\.md$")
+
+if [ -z "$WIKI_STAGED" ]; then
+  exit 0
+fi
+
+# 경고 출력
+echo ""
+echo "⚠️  [wiki 오염 방지 경고]"
+echo "────────────────────────────────────────"
+echo "다음 wiki/ 파일이 staged되어 있습니다:"
+echo ""
+echo "$WIKI_STAGED" | sed 's/^/  - /'
+echo ""
+echo "wiki/ 는 Claude 전용 영역입니다."
+echo "직접 편집한 경우 내용 정합성이 깨질 수 있습니다."
+echo ""
+echo "  • 의도한 수정이라면: 그대로 커밋하세요 (Enter 입력)"
+echo "  • Claude Code 커밋이라면: ALLOW_WIKI_EDIT=1 git commit ..."
+echo "  • 취소하려면: Ctrl+C"
+echo ""
+
+# 터미널에서 직접 입력받기
+exec < /dev/tty
+read -r -p "계속 진행하시겠습니까? [y/N] " response
+echo ""
+
+case "$response" in
+  [yY][eE][sS]|[yY])
+    exit 0
+    ;;
+  *)
+    echo "커밋이 취소되었습니다. wiki/ 수정 내역을 확인하세요."
+    exit 1
+    ;;
+esac

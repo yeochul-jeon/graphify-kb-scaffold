@@ -1,0 +1,14 @@
+.claude/settings.local.json
+.obsidian/
+raw/attachments/*.pdf
+raw/attachments/*.epub
+output/*.png
+output/*.svg
+.DS_Store
+*.tmp
+node_modules/
+__pycache__/
+# graphify build artifacts (regenerated on each /graphify run)
+graphify-out/*
+!graphify-out/.gitkeep
+wiki/graphify-out/

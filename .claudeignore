@@ -1,0 +1,18 @@
+# 생성된 출력물 — 항상 명시적 경로로 읽으므로 인덱싱 불필요
+output/
+logs/
+.work-log/
+
+# 바이너리/스크립트 — LLM이 읽을 필요 없음
+*.py
+*.html
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.pdf
+
+# 첨부 파일
+raw/attachments/
+wiki/attachments/
+raw/Clippings/
