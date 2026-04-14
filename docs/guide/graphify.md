@@ -5,11 +5,39 @@
 
 ---
 
+## 설치
+
+### 기본 설치 (권장: pipx)
+
+```bash
+pipx install graphifyy          # pipx 없으면: brew install pipx
+# 또는 pip (macOS Sonoma 이상에서 PEP 668 오류 시 → troubleshooting.md 3번)
+pip install graphifyy
+```
+
+### 선택 extras
+
+| extras | 설치 명령 | 활성화 기능 |
+|---|---|---|
+| `[video]` | `pipx install 'graphifyy[video]'` | MP4 · MOV · MKV · WebM · AVI · MP3 · WAV · M4A · OGG · YouTube URL |
+| `[office]` | `pipx install 'graphifyy[office]'` | DOCX · XLSX |
+
+### 이 프로젝트에서 사용하는 방법
+
+`bash scripts/graphify-bootstrap.sh` 를 실행하면 `graphifyy` 설치 + Python 인터프리터 경로 감지 (`graphify-out/.graphify_python`)를 한 번에 처리합니다.
+
+> **주의: `graphify install` / `graphify claude install` 실행 금지**  
+> 상위 graphify v0.4.13+는 설치 후 `graphify install` 명령으로 `CLAUDE.md` / `.claude/settings.json` 에 훅을 자동 주입합니다.  
+> 이 프로젝트는 이미 커스텀 설정을 보유하므로, 위 명령을 실행하면 **기존 파일이 덮어써집니다**.  
+> 신규 저장소에서 graphify를 처음 통합할 때만 사용하세요.
+
+---
+
 ## graphify란?
 
 **graphify**는 볼트 전체 파일을 읽어 **노드·엣지 지식그래프**로 변환하는 외부 도구입니다.
 
-> 중요: graphify는 이 저장소에 포함된 코드가 아닙니다. `~/.claude/skills/graphify/SKILL.md`가 관리하는 외부 `graphifyy` pip 패키지이며, `/graphify` 커맨드를 처음 실행하면 자동으로 설치됩니다.
+> 중요: graphify는 이 저장소에 포함된 코드가 아닙니다. `~/.claude/skills/graphify/SKILL.md`가 관리하는 외부 `graphifyy` pip 패키지 (v0.4.13+, MIT 라이선스)입니다. 설치는 `bash scripts/graphify-bootstrap.sh` 로 처리합니다.
 
 ### 왜 필요한가?
 
@@ -23,9 +51,20 @@
 
 ---
 
-## 산출물 3가지
+## 출력 산출물
 
-### 1. `graph.html` — 인터랙티브 시각화
+모든 산출물은 `graphify-out/` 에 저장됩니다.
+
+| 파일 | 역할 |
+|---|---|
+| `graph.html` | 브라우저에서 볼 수 있는 인터랙티브 지식그래프 |
+| `GRAPH_REPORT.md` | god nodes · 커뮤니티 요약 · Knowledge Gaps (LLM 탐색 전 먼저 읽음) |
+| `graph.json` | 노드·엣지 전체 데이터 (GraphRAG · 외부 도구 연동) |
+| `cache/*.json` | SHA256 기반 LLM 응답 캐시 (중복 호출 방지) |
+| `transcripts/` | 영상·오디오 파일 전사(transcription) 캐시 (`[video]` extras 사용 시) |
+| `.graphify_python` | 인터프리터 경로 캐시 (`scripts/graphify-bootstrap.sh` 생성) |
+
+### `graph.html` — 인터랙티브 시각화
 
 브라우저에서 볼 수 있는 PyVis 기반 지식그래프입니다.
 
@@ -73,10 +112,10 @@ Claude Code 세션에서:
 /graphify
 ```
 
-처음 실행 시:
-1. `graphifyy` pip 패키지가 설치됩니다 (자동).
-2. 볼트 전체 파일을 스캔합니다 (시간이 다소 걸릴 수 있습니다).
-3. `graphify-out/` 디렉토리에 파일 5가지가 생성됩니다.
+처음 실행 전 준비:
+1. `bash scripts/graphify-bootstrap.sh` — `graphifyy` 설치 + 인터프리터 경로 저장 (Python 3.10+ 필요).
+2. `/graphify .` 실행 시 볼트 전체 파일을 스캔합니다 (시간이 다소 걸릴 수 있습니다).
+3. `graphify-out/` 디렉토리에 산출물이 생성됩니다 (아래 "출력 산출물" 참고).
 
 완료 후 확인:
 
@@ -175,6 +214,36 @@ Obsidian Graph View와 호환되는 형식으로 출력합니다.
 /graphify . --obsidian
 ```
 
+### `--mode deep`
+
+심층 분석 모드로 빌드합니다. LLM 호출 횟수가 증가해 더 세밀한 관계를 추출합니다 (비용 주의).
+
+```
+/graphify . --mode deep
+```
+
+### 내보내기 플래그
+
+```
+/graphify . --svg       ← SVG 그래프 이미지 내보내기
+/graphify . --graphml   ← GraphML 형식 (Gephi, yEd 등 외부 도구 호환)
+/graphify . --neo4j     ← Neo4j 가져오기 파일 생성
+```
+
+---
+
+## 지원 입력 타입
+
+graphify는 아래 파일 형식을 모두 그래프 노드로 처리합니다.
+
+| 카테고리 | 형식 |
+|---|---|
+| **코드** | Python, TypeScript, JavaScript, Go, Rust, Java, C/C++, Ruby, C#, Kotlin, Scala, PHP, Swift, Dart, Lua, Zig 등 20+ 언어 |
+| **문서** | Markdown, 텍스트, RST, DOCX, XLSX, PDF |
+| **이미지** | PNG, JPG, WebP, GIF |
+| **영상·오디오** | MP4, MOV, MKV, WebM, AVI, M4V, MP3, WAV, M4A, OGG (`[video]` extras 필요) |
+| **URL** | YouTube URL (`[video]` extras 필요) |
+
 ---
 
 ## CLAUDE.md 자동 통합
@@ -230,3 +299,18 @@ cat graphify-out/cost.json
 - [docs/guide/commands.md](commands.md) — 전체 슬래시 커맨드 레퍼런스
 - [docs/guide/troubleshooting.md](troubleshooting.md) — graphify 설치·실행 오류 해결
 - [graphify-out/GRAPH_REPORT.md](../../graphify-out/GRAPH_REPORT.md) — 현재 그래프 상태 (자동 생성)
+
+---
+
+## 업스트림 레퍼런스
+
+이 프로젝트가 사용하는 graphify 상위 소스 (v0.4.13, MIT 라이선스, 2026-04-14 기준):
+
+| 링크 | 내용 |
+|---|---|
+| [github.com/safishamsi/graphify](https://github.com/safishamsi/graphify) | 공식 GitHub 저장소 (README · CHANGELOG · Issue) |
+| [pypi.org/project/graphifyy/](https://pypi.org/project/graphifyy/) | PyPI 패키지 (패키지명 `graphifyy`, double-y) |
+| [graphify.net/kr/](https://graphify.net/kr/) | 공식 홈페이지 (한국어) |
+| [github.com/sponsors/safishamsi](https://github.com/sponsors/safishamsi) | 후원 |
+
+> 버전이 올라간 경우: `bash scripts/regen-graphify-skill.sh` 로 SKILL.md 를 갱신하세요.

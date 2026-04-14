@@ -9,7 +9,7 @@ graphify 기반 지식 저장소를 빠르게 셋업하는 가이드입니다.
 | 도구 | 버전 | 설치 방법 |
 |---|---|---|
 | [Claude Code](https://claude.ai/code) | 최신 | 공식 사이트 |
-| Python | 3.10+ | `brew install python` 또는 pyenv |
+| Python | **3.10+** | `brew install python` 또는 pyenv (graphifyy 요구사항) |
 | git | 2.x+ | 보통 기본 설치됨 |
 | gh (GitHub CLI) | 선택 | `brew install gh` |
 
@@ -108,6 +108,21 @@ cp .claude/settings.local.json.example .claude/settings.local.json
 ## 문제해결
 
 → [`docs/guide/troubleshooting.md`](guide/troubleshooting.md)
+
+---
+
+## 업스트림 graphify
+
+이 스케폴드가 사용하는 지식그래프 엔진 — `graphifyy` (pip 패키지, double-y):
+
+| 링크 | 내용 |
+|---|---|
+| [github.com/safishamsi/graphify](https://github.com/safishamsi/graphify) | 공식 GitHub (v0.4.13, MIT) |
+| [pypi.org/project/graphifyy/](https://pypi.org/project/graphifyy/) | PyPI |
+| [graphify.net/kr/](https://graphify.net/kr/) | 공식 홈페이지 |
+
+> `[video]` extras: `pipx install 'graphifyy[video]'` → YouTube URL · MP4 · MP3 등 지원  
+> `[office]` extras: `pipx install 'graphifyy[office]'` → DOCX · XLSX 지원
 
 ---
 

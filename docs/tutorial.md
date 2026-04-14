@@ -215,7 +215,9 @@ wiki와 raw 파일이 쌓이면 **전체 볼트를 그래프로 시각화**할 �
 /graphify .
 ```
 
-처음 실행 시 `graphifyy` 패키지가 자동으로 설치됩니다.
+처음 실행 전에 `bash scripts/graphify-bootstrap.sh` 를 실행하면 `graphifyy` 설치 및 인터프리터 경로 설정이 자동으로 처리됩니다. (`Python 3.10+` 필요)
+
+**지원 입력**: Markdown · PDF · DOCX · XLSX · PNG/JPG/WebP · MP4/MOV · MP3/WAV · YouTube URL 등 광범위한 파일 형식을 처리합니다 (영상·오디오는 `[video]` extras 설치 필요).
 
 ### 실행 후 확인할 것
 

@@ -8,13 +8,23 @@ LLM이 "컴파일러" 역할을 하여 원본 자료를 구조화된 마크다�
 
 ---
 
+## 전제조건
+
+| 도구 | 버전 | 용도 |
+|---|---|---|
+| [Claude Code](https://claude.ai/code) | 최신 | 슬래시 커맨드 런타임 |
+| Python | **3.10+** | graphifyy 런타임 (`brew install python`) |
+| Git | 2.x+ | 버전 관리 |
+
+---
+
 ## 빠른 시작
 
 ### 1. 저장소 클론
 
 ```bash
-git clone https://github.com/yeochul-jeon/graphify-kb.git
-cd graphify-kb
+git clone https://github.com/yeochul-jeon/graphify-kb-scaffold.git
+cd graphify-kb-scaffold
 ```
 
 ### 2. Claude Code에서 실행
@@ -142,6 +152,15 @@ graphify-kb/
 - [docs/obsidian-setup.md](docs/obsidian-setup.md) — Obsidian + Web Clipper 설정
 
 ### 설계
-- [PLAN.md](PLAN.md) — 프로젝트 설계 및 기술 결정 배경
 - [CLAUDE.md](CLAUDE.md) — LLM 행동 지침 (오염 방지 원칙 등)
-- [wiki/index.md](wiki/index.md) — 지식 베이스 인덱스
+- [wiki/index.md](wiki/index.md) — 지식 베이스 인덱스 (첫 `/compile` 후 자동 생성)
+
+---
+
+## 업스트림 graphify
+
+| 링크 | 내용 |
+|---|---|
+| [github.com/safishamsi/graphify](https://github.com/safishamsi/graphify) | 공식 GitHub (v0.4.13, MIT) |
+| [pypi.org/project/graphifyy/](https://pypi.org/project/graphifyy/) | PyPI — 패키지명 `graphifyy` (double-y) |
+| [graphify.net/kr/](https://graphify.net/kr/) | 공식 홈페이지 |

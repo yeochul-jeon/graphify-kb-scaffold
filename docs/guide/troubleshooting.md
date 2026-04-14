@@ -86,6 +86,46 @@ pipx install graphifyy
 
 ---
 
+## 3-1. Python 버전이 3.10 미만이에요
+
+**현상**:
+```
+ModuleNotFoundError: No module named 'graphify'
+# 또는
+SyntaxError: match statement requires Python 3.10+
+```
+
+**이유**: `graphifyy` v0.4.13+는 Python 3.10 이상이 필요합니다.
+
+**해결**:
+
+```bash
+python3 --version          # 현재 버전 확인
+brew install python        # 최신 Python 설치 (macOS)
+pyenv install 3.11 && pyenv global 3.11   # 또는 pyenv 사용
+```
+
+설치 후 `bash scripts/graphify-bootstrap.sh` 를 다시 실행하면 새 인터프리터 경로가 저장됩니다.
+
+---
+
+## 3-2. `graphify install` 명령이 CLAUDE.md를 덮어썼어요
+
+**현상**: `/graphify` 실행 후 `CLAUDE.md` 나 `.claude/settings.json` 내용이 변경되었다.
+
+**이유**: `graphify install` (또는 `graphify claude install`) 명령은 Claude Code 통합 훅을 파일에 자동 주입합니다. 이 프로젝트처럼 이미 커스텀 설정을 보유한 경우 기존 내용을 덮어씁니다.
+
+**복구 방법**:
+
+```bash
+git diff CLAUDE.md .claude/settings.json   # 변경 내용 확인
+git checkout CLAUDE.md .claude/settings.json   # 이전 버전으로 복원
+```
+
+**예방**: `graphify install` 명령을 이 프로젝트에서는 실행하지 마세요. 자세한 내용은 [docs/guide/graphify.md](graphify.md) 설치 섹션 참고.
+
+---
+
 ## 4. pre-commit hook이 커밋을 차단해요
 
 **현상**:

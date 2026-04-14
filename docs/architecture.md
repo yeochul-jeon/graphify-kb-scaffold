@@ -69,7 +69,7 @@ Vector DB나 별도 서버 없이 **파일 시스템 + LLM 직접 읽기**만으
 | 비용 기록 | `graphify-out/cost.json` | LLM 호출 비용 추적 |
 | 응답 캐시 | `graphify-out/cache/*.json` | 동일 파일 재처리 방지 |
 
-> `graphify`는 이 저장소에 포함된 코드가 **아닙니다**. `~/.claude/skills/graphify/SKILL.md`가 관리하는 외부 `graphifyy` pip 패키지입니다.
+> `graphify`는 이 저장소에 포함된 코드가 **아닙니다**. `~/.claude/skills/graphify/SKILL.md`가 관리하는 외부 `graphifyy` pip 패키지 (v0.4.13+, MIT 라이선스)입니다. → [github.com/safishamsi/graphify](https://github.com/safishamsi/graphify)
 
 ---
 
@@ -187,8 +187,8 @@ graphify-kb/
 |---|---|---|---|
 | **Claude Code** | 필수 | 슬래시 커맨드 런타임 | [공식 설치 가이드](https://docs.anthropic.com/ko/docs/claude-code) |
 | **Git** | 필수 | 버전 관리, pre-commit hook | 시스템 기본 |
-| **graphifyy** (pip) | graphify 사용 시 필수 | 지식그래프 생성 | SKILL.md가 자동 설치 |
-| **Python 3** | graphify 사용 시 필수 | graphifyy 런타임 | 시스템 기본 또는 Homebrew |
+| **graphifyy** (pip, v0.4.13+, MIT) | graphify 사용 시 필수 | 지식그래프 생성 · extras: `[video]`(영상·오디오·YouTube URL), `[office]`(DOCX/XLSX) | `bash scripts/graphify-bootstrap.sh` · [PyPI](https://pypi.org/project/graphifyy/) · [GitHub](https://github.com/safishamsi/graphify) |
+| **Python 3.10+** | graphify 사용 시 필수 | graphifyy 런타임 | 시스템 기본 또는 `brew install python` |
 | **Obsidian** | 선택 | wiki/ 그래프 뷰, Web Clipper | [obsidian.md](https://obsidian.md) |
 | **Marp CLI** | 선택 | `/ask --slides` 슬라이드 출력 | `npm install -g @marp-team/marp-cli` |
 | **matplotlib** | 선택 | `/ask --chart` 차트 출력 | `pip3 install matplotlib` |

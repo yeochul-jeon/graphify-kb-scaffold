@@ -275,10 +275,21 @@ key_insights:
 ### 구문 요약
 
 ```
-/graphify .              ← 현재 디렉토리 전체 빌드
-/graphify . --update     ← 변경된 파일만 증분 빌드 (권장)
-/graphify add <URL>      ← URL 자료를 바로 그래프에 추가
-/graphify query "..."    ← 그래프 기반 질의
+/graphify .                  ← 현재 디렉토리 전체 빌드
+/graphify . --update         ← 변경된 파일만 증분 빌드 (권장)
+/graphify . --mode deep      ← 심층 분석 모드 (LLM 호출 증가, 비용 주의)
+/graphify add <URL>          ← URL 자료를 바로 그래프에 추가
+/graphify query "..."        ← 그래프 구조 기반 질의
+/graphify path "A" "B"       ← 두 노드 사이 최단 경로 탐색
+/graphify explain <노드명>   ← 특정 노드의 연결 관계 설명
+```
+
+### 내보내기 플래그
+
+```
+/graphify . --svg        ← SVG 형식으로 그래프 내보내기
+/graphify . --graphml    ← GraphML 형식으로 내보내기 (Gephi 등 호환)
+/graphify . --neo4j      ← Neo4j 가져오기 형식으로 내보내기
 ```
 
 ---
