@@ -74,7 +74,8 @@ graphify-kb/
 ├── raw/        ← 원본 자료 보관함 (여기에 자료를 넣어요)
 ├── wiki/       ← Claude가 정리한 지식 베이스 (Claude 전용, 직접 편집 비권장)
 ├── output/     ← Q&A 답변, 슬라이드, 차트 결과물
-└── log/        ← 작업 로그 (자동 기록)
+├── log.md      ← 전체 요약 타임라인
+└── .work-log/  ← 상세 작업 로그 (DEV_LOG_YYYYMMDD.md)
 ```
 
 > **비유**: `raw/`는 재료 창고, `wiki/`는 Claude가 만든 정리된 레시피북, `output/`은 요리 결과물입니다.
@@ -279,7 +280,7 @@ open graphify-out/graph.html    # 브라우저에서 인터랙티브 그래프 �
 |---|---|---|
 | `/capture [주제]` | 현재 대화의 인사이트를 `raw/sessions/`에 저장 | `/capture MSA 에러 처리 패턴` |
 | `/review [파일]` | `output/` 답변을 검토해 wiki에 승격 | `/review output/answer-20260410.md` |
-| `/dev-log [단계명]` | 작업 단계를 `logs/DEV_LOG_*.md`에 기록 | `/dev-log 튜토리얼 작성 완료` |
+| `/dev-log [단계명]` | 작업 단계를 `.work-log/dev/DEV_LOG_*.md`에 기록 | `/dev-log 튜토리얼 작성 완료` |
 
 > 전체 커맨드 레퍼런스: [docs/guide/commands.md](guide/commands.md)
 

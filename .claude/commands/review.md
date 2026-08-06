@@ -15,6 +15,8 @@ output 파일의 인사이트를 검토하고 wiki로 승격합니다. Triggers:
 - `--list` 플래그 시: `output/` 내 모든 `.md` 파일 중 하단에 `## Review Summary`가 없는 파일 목록만 출력하고 종료
 - 인자 없으면 에러: "리뷰할 파일을 지정해주세요. `/review --list`로 미리뷰 파일을 확인할 수 있습니다."
 
+`/ask --loop`가 만든 `## Promotion Candidates` 섹션이 있으면 이를 우선 참고하되, 실제 승격 전에는 반드시 output 전체와 대상 wiki 파일을 다시 검토한다.
+
 ### Step 2: output 파일 분석
 
 대상 파일을 전체 읽고 다음을 식별:
@@ -63,10 +65,16 @@ tags: [tag1, tag2]
 sources: [output/원본파일.md]
 verified: false
 confidence: medium
+claim_status: inferred
+evidence_level: ai_synthesis
+last_verified: null
+review_due: null
 ---
 ```
 - `sources`에는 원본 output 파일 경로를 기록
 - `confidence: medium` 기본값 (output은 합성 결과이므로 raw보다 한 단계 낮게)
+- output 승격은 사람이 검증하기 전까지 합성 지식으로 보고 `claim_status: inferred`, `evidence_level: ai_synthesis`를 기본값으로 사용
+  - 이는 **`/review` 워크플로의 기본값**이다. 전체 열거값과 판정 기준은 `.claude/rules/wiki-concepts.md` 가 단일 출처 — `/compile` 은 `source_backed` 를 기본값으로 쓴다
 
 **기존 파일 보완** — 기존 파일을 완전히 읽은 후:
 - 새 정보를 적절한 섹션에 append (기존 내용 삭제 금지)

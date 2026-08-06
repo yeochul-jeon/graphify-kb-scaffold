@@ -20,7 +20,7 @@ flowchart LR
 
     subgraph deny ["동기화 제외 (drift 허용)"]
         D1["README.md · CHANGELOG.md"]
-        D2["wiki/ · raw/ · output/ · logs/"]
+        D2["wiki/ · raw/ · output/ · .work-log/"]
         D3[".gitignore (정책 다름)"]
         D4["settings.local.json"]
     end
@@ -107,7 +107,7 @@ sequenceDiagram
 | `.claude/commands/` | dir (--delete) | 슬래시 커맨드 명세 전체 |
 | `.claude/rules/` | dir (--delete) | scaling 등 LLM 운영 규칙 |
 | `.claude/skills/graphify/` | dir (--delete) | graphify 스킬 오버라이드 |
-| `docs/guide/` | dir (--delete) | commands / graphify / troubleshooting / scaffold-sync |
+| `docs/guide/` | dir (--delete) | commands / graphify / troubleshooting / scaffold-sync / ai-memory-stack / wiki-schema |
 | `raw/_templates/` | dir (--delete) | ingest 템플릿 |
 | `.claude/settings.json` | file | 프로젝트 Claude Code 설정 |
 | `.githooks/pre-commit` | file | pre-commit 훅 |
@@ -121,13 +121,13 @@ sequenceDiagram
 | 항목 | 이유 |
 |------|------|
 | `README.md` | clone URL / 브랜딩이 다름 |
-| `CHANGELOG.md` / `PLAN.md` / `log.md` | 저장소별 독립 이력 |
+| `docs/CHANGELOG.md` / `PLAN.md` / `log.md` | 저장소별 독립 이력 |
 | `docs/GETTING_STARTED.md` | scaffold 전용 온보딩 |
-| `docs/improvement-plan.md` / `docs/superpowers/` | main 전용 내부 자료 |
+| `docs/improvement-plan.md` / `docs/plan/` | main 전용 내부 자료 |
 | `.gitignore` | 정책 다름 (main: 구체 경로 / scaffold: `graphify-out/*` 와일드카드) |
 | `.claude/settings.local.json` | 토큰·로컬 경로 포함 가능, 절대 동기화 금지 |
 | `.claude/settings.local.json.example` | scaffold 수동 관리 |
-| `wiki/` / `raw/` (`_templates` 제외) / `output/` / `logs/` / `graphify-out/` | 사용자 KB 데이터 |
+| `wiki/` / `raw/` (`_templates` 제외) / `output/` / `.work-log/` / `graphify-out/` | 사용자 KB 데이터 |
 | `.git/` / `.DS_Store` / `.obsidian/` / `.claude/worktrees/` | 런타임·시스템 파일 |
 
 ---

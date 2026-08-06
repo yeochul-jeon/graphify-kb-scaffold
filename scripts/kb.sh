@@ -22,7 +22,8 @@ show_status() {
   echo "wiki 주제:      $wiki_topics 개"
   echo "output 파일:    $outputs 개"
   echo ""
-  echo "오늘 작업 로그: log/work_log_${TODAY}.md"
+  echo "오늘 작업 로그: .work-log/dev/DEV_LOG_${TODAY}.md"
+  echo "전체 타임라인: log.md"
 }
 
 case "$1" in

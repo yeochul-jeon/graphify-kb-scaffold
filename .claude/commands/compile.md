@@ -50,6 +50,10 @@ tags: [tag1, tag2]
 sources: [raw/파일명.md]
 verified: false
 confidence: high|medium|low
+claim_status: source_backed
+evidence_level: secondary
+last_verified: null
+review_due: null
 ---
 
 # [개념명]
@@ -72,6 +76,19 @@ confidence: high|medium|low
 ## 출처
 - [[raw/파일명.md]]
 ```
+
+`claim_status: source_backed`는 raw 원문에서 직접 컴파일된 페이지에만 사용한다.
+그 외 합성 중심 페이지는 `evidence_level: ai_synthesis`로 표시한다.
+
+> 위 두 줄은 **`/compile` 워크플로의 기본값**이지 전체 허용값이 아니다.
+> `claim_status`/`evidence_level` 의 **전체 열거값과 판정 기준은 `.claude/rules/wiki-concepts.md` 가 단일 출처**다
+> 다른 값을 쓴 파일을 만나면 **그 절을 열어 대조하라 — 이 문서만 근거로 "enum 위반" 으로 판정하지 말 것.** (여기에 허용값 목록을 다시 적지 않는 이유: 사본이 늘면 낡는다. lint 4~8회차가 이 문서만 보고 5회 연속 오보한 것이 그 결과다.)
+>
+> 특히 `claim_status` 는 `sources` 구성만 본다 — 본문이 출처 범위를 넘는 것은 `evidence_level: ai_synthesis` 로만 표현하고 `claim_status` 는 건드리지 않는다 (같은 절 §두 필드의 역할 분담).
+
+> **`evidence_level: primary` 는 출처 도메인이 아니라 본문으로 판정한다.** 출처가 공식문서·명세·논문 원문이어도, **본문에 그 출처를 넘어서는 서술이 하나라도 있으면 `secondary` 로 낮춘다**(우선순위 규칙). 2026-07-27 실측에서 `aws.amazon.com` 인용 8건 중 primary 는 0건이었고(전부 `/blogs/` 해설글), `linked-data`·`hipporag` 는 출처가 1차 자료인데도 본문이 범위를 넘어 secondary 가 됐다.
+>
+> 기존 파일에 4필드를 소급 부착할 때는 `scripts/attach-claim-metadata.py` 를 쓴다 (`.claude/rules/wiki-concepts.md` §부착 도구와 파생 규칙).
 
 ### Step 3.5: 이미지 참조 처리
 
@@ -104,6 +121,8 @@ raw 파일 frontmatter에 `images` 필드가 있거나 본문에 이미지 참�
 참조하는 파일:
 - [[다른개념]] (이유/맥락)
 ```
+
+**정책**: 참조하는 파일이 없는 개념은 빈 블록으로 남기지 말고 항목 자체를 생략한다.
 
 ### Step 6: raw 파일 frontmatter 업데이트
 

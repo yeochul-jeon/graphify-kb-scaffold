@@ -42,6 +42,10 @@ Vector DB나 별도 서버 없이 **파일 시스템 + LLM 직접 읽기**만으
 | `output/` | Q&A 답변, 슬라이드, 차트 결과물 | LLM이 `/ask`·`/lint`로 생성 |
 | `raw/Clippings/` | Obsidian Web Clipper로 가져온 원본 (`.graphifyignore`로 스캔 제외) | 자동 수집 |
 
+**민감 자료 보호**: 민감 자료는 `raw/private/`, `raw/company/`, `raw/medical/`, `raw/finance/` 아래에 둡니다.
+이 경로는 git, Claude direct scan, Graphify indexing에서 제외합니다.
+공유 가능한 자료만 일반 `raw/`에 둡니다.
+
 **오염 방지 원칙**: `wiki/`는 LLM만 편집합니다. 사람이 직접 수정하면 다음 `/compile` 시 내용이 덮어쓰여질 수 있습니다. 수정이 필요하면 `raw/`에 내용을 추가한 뒤 `/compile`을 다시 실행하세요.
 
 ### 2. Claude Code 하네스
@@ -63,7 +67,7 @@ Vector DB나 별도 서버 없이 **파일 시스템 + LLM 직접 읽기**만으
 | 산출물 | 경로 | 역할 |
 |---|---|---|
 | 인터랙티브 뷰 | `graphify-out/graph.html` | 브라우저에서 볼 수 있는 지식그래프 |
-| 커뮤니티 지도 | `graphify-out/GRAPH_REPORT.md` | god nodes, 22개 커뮤니티 요약 (LLM이 먼저 읽음) |
+| 커뮤니티 지도 | `graphify-out/GRAPH_REPORT.md` | god nodes, 22개 커뮤니티 요약 (query 결과 이후 전역 지형이 필요할 때 확인) |
 | 전체 그래프 | `graphify-out/graph.json` | GraphRAG·외부 도구 연동용 |
 | 증분 추적 | `graphify-out/manifest.json` | mtime 기반 변경 파일만 재처리 |
 | 비용 기록 | `graphify-out/cost.json` | LLM 호출 비용 추적 |
@@ -90,7 +94,8 @@ graphify-kb/
 │   ├── topics/                 ← 상위 주제 파일 (6개)
 │   └── _meta/
 │       ├── compile-log.md      ← 컴파일 이력
-│       └── suggested-investigations.md  ← /lint 제안 탐구 주제
+│       ├── suggested-investigations.md  ← /lint 제안 탐구 주제
+│       └── weather.md          ← Knowledge Weather 현재 대시보드
 │
 ├── output/                     ← /ask, /lint 결과물
 │   ├── answer-YYYYMMDD-HHmm.md
@@ -114,6 +119,7 @@ graphify-kb/
 │   ├── guide/
 │   │   ├── commands.md         ← 슬래시 커맨드 레퍼런스
 │   │   ├── graphify.md         ← 지식그래프 통합 가이드
+│   │   ├── wiki-schema.md      ← wiki frontmatter 선택 스키마
 │   │   └── troubleshooting.md  ← 초보자 막힘 해결
 │   └── superpowers/            ← 내부 설계 스펙
 │
@@ -126,13 +132,14 @@ graphify-kb/
 │   ├── rules/scaling.md        ← 규모별 탐색 전략
 │   └── settings.json           ← 허용 툴 + PreToolUse 훅
 │
-├── logs/                       ← 일자별 DEV_LOG
+├── .work-log/                  ← 세션 체크포인트 + 상세 dev-log
+│   └── dev/                    ← DEV_LOG_YYYYMMDD.md 상세 작업 로그
 ├── .githooks/                  ← pre-commit hook 원본
 ├── .obsidian/                  ← Obsidian 볼트 설정
 ├── CLAUDE.md                   ← LLM 행동 지침 (graphify 규칙 포함)
 ├── PLAN.md                     ← 프로젝트 설계·로드맵
 ├── README.md                   ← 프로젝트 개요 + 빠른 시작
-└── log.md                      ← 전체 작업 이력
+└── log.md                      ← 전체 요약 타임라인
 ```
 
 ---
@@ -150,22 +157,23 @@ graphify-kb/
      ▼
   wiki/concepts/*.md
   wiki/topics/*.md
-  wiki/index.md        ←──────────────┐
-  wiki/backlinks.md                   │  피드백 루프
-     │                                │  (새 인사이트 발견)
-     │  /ask [--slides|--chart|--html] │
-     ▼                                │
-  output/answer-*.md  ────────────────┘
+  wiki/index.md
+  wiki/backlinks.md
+     │
+     │  /ask [--slides|--chart|--html|--loop]
+     ▼
+  output/answer-*.md        (/ask는 output/ only)
   output/slides-*.md
   output/chart-*.py
 
      │  /review
      ▼
-  wiki/ (승격된 인사이트 반영)
+  wiki/ (승인된 output 인사이트 반영)
 
      │  /lint [--fix]
      ▼
-  output/lint-report-*.md
+  output/lint-report-*.md  (상세 보고서)
+  wiki/_meta/weather.md    (Knowledge Weather 현재 대시보드)
   wiki/ (자동 수정)
 
 
@@ -174,7 +182,7 @@ graphify-kb/
      │  /graphify  (외부 graphify CLI)
      ▼
   graphify-out/graph.html        ← 브라우저 시각화
-  graphify-out/GRAPH_REPORT.md   ← LLM이 탐색 전 먼저 읽음
+  graphify-out/GRAPH_REPORT.md   ← query 결과 이후 전역 지형이 필요할 때 확인
   graphify-out/graph.json        ← GraphRAG 연동
   graphify-out/manifest.json     ← 증분 재빌드용 mtime 추적
 ```
@@ -200,8 +208,8 @@ graphify-kb/
 
 | 파일 | 라인 | 역할 |
 |---|---|---|
-| `CLAUDE.md` | L4–9 | graphify 재빌드 명령 + GRAPH_REPORT.md 우선 읽기 규칙 |
-| `.claude/settings.json` | PreToolUse | Glob/Grep 호출 시 GRAPH_REPORT.md 읽기 훅 |
+| `CLAUDE.md` | L4–9 | graphify 재빌드 명령 + query-first 탐색 규칙 |
+| `.claude/settings.json` | PreToolUse | Glob/Grep 호출 시 query-first 탐색 힌트 |
 | `.claude/rules/scaling.md` | 전체 | 100/500/500+ 아티클 규모별 탐색 전략 |
 | `scripts/kb.sh` | L28– | 슬래시 커맨드 CLI 프록시 구현 |
 | `.claude/commands/ingest.md` | 전체 | `/ingest` 처리 로직 (프롬프트) |
@@ -219,7 +227,10 @@ graphify-kb/
 `wiki/`는 `/compile`이 관리하는 "검증된 지식 공간"입니다.
 사람이 직접 편집하면 다음 컴파일 때 내용이 덮어쓰여집니다.
 pre-commit hook이 `wiki/` 파일이 staged되면 경고를 표시합니다.
+비대화형/CI 환경에서는 `ALLOW_WIKI_EDIT=1`이 없으면 실패 종료(exit 1)하며, 필요하면 `ALLOW_WIKI_EDIT_REASON`으로 우회 사유를 남깁니다.
 사람의 수정은 반드시 `raw/`를 경유해야 합니다.
+
+새로 만들거나 수정한 wiki 파일은 선택적으로 `claim_status`, `evidence_level`, `last_verified`, `review_due`를 기록할 수 있습니다. 값 정책은 [docs/guide/wiki-schema.md](guide/wiki-schema.md)를 따릅니다.
 
 ### 2. 증분 재빌드 — 비용 절약
 
@@ -227,12 +238,12 @@ pre-commit hook이 `wiki/` 파일이 staged되면 경고를 표시합니다.
 `/graphify . --update`는 변경된 파일만 재처리합니다.
 `graphify-out/cache/*.json`은 동일 파일의 LLM 응답을 캐시해 중복 호출을 방지합니다.
 
-### 3. 컨텍스트 절약 — index.md 우선 읽기
+### 3. 컨텍스트 절약 — graphify query 우선 탐색
 
 Claude가 질문에 답할 때 `wiki/` 전체를 읽지 않습니다.
 `.claude/settings.json`의 PreToolUse 훅이 Glob/Grep 호출 시
-`graphify-out/GRAPH_REPORT.md`를 먼저 읽도록 유도합니다.
-탐색 순서: `GRAPH_REPORT.md` → `wiki/index.md` → `wiki/topics/` → 관련 `wiki/concepts/`
+`scripts/graphify-py.sh -m graphify query "<질문>" --budget 1500` 실행을 먼저 유도합니다.
+탐색 순서: `graphify query` → query 결과의 `source_file` → 필요 시 `wiki/index.md` 태그 프리페이스 → 필요 시 `graphify-out/GRAPH_DIGEST.md` → 최후에 `GRAPH_REPORT.md`.
 
 ---
 
@@ -255,5 +266,6 @@ Claude가 질문에 답할 때 `wiki/` 전체를 읽지 않습니다.
 - [docs/tutorial.md](tutorial.md) — 설치부터 첫 실행까지 단계별 따라하기
 - [docs/guide/commands.md](guide/commands.md) — 슬래시 커맨드 전체 레퍼런스
 - [docs/guide/graphify.md](guide/graphify.md) — 지식그래프 통합 상세 가이드
+- [docs/guide/wiki-schema.md](guide/wiki-schema.md) — wiki frontmatter 선택 스키마
 - [docs/guide/troubleshooting.md](guide/troubleshooting.md) — 막힘 해결
 - [PLAN.md](../PLAN.md) — 시스템 설계 결정 및 미래 로드맵

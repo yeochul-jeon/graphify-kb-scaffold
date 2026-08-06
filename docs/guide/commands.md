@@ -12,11 +12,11 @@
 |---|---|---|
 | `/ingest [URL\|텍스트]` | 자료 수집 | 외부 자료 → `raw/` |
 | `/compile [파일명]` | wiki 컴파일 | `raw/` → `wiki/` |
-| `/ask [질문] [--flags]` | 질의응답 | wiki → `output/` |
-| `/lint [--fix]` | 품질 점검 | wiki → `output/lint-report-*.md` |
+| `/ask [질문] [--flags]` | 질의응답 | wiki → `output/` only |
+| `/lint [--fix]` | 품질 점검 | wiki → `output/lint-report-*.md`, `wiki/_meta/*` |
 | `/capture [주제]` | 대화 인사이트 저장 | 현재 대화 → `raw/sessions/` |
 | `/review [파일\|--list]` | output → wiki 승격 | `output/` → `wiki/` |
-| `/dev-log [단계명]` | 작업 기록 | 현재 대화 → `logs/DEV_LOG_*.md` |
+| `/dev-log [단계명]` | 작업 기록 | 현재 대화 → `.work-log/dev/DEV_LOG_*.md` |
 | `/graphify [명령]` | 지식그래프 빌드 | 볼트 전체 → `graphify-out/` |
 
 ---
@@ -57,6 +57,9 @@ compiled_date: null
 ### 주의
 
 - Notion URL은 Notion MCP가 연동된 경우에만 자동 수집됩니다. 미연동 시 내용을 직접 붙여넣기 하세요.
+- 민감 자료는 `raw/private/`, `raw/company/`, `raw/medical/`, `raw/finance/` 아래에 둡니다.
+  이 경로는 git, Claude direct scan, Graphify indexing에서 제외합니다.
+  공유 가능한 자료만 일반 `raw/`에 둡니다.
 
 ---
 
@@ -83,6 +86,7 @@ compiled_date: null
 ### 주의
 
 - 생성된 wiki 파일은 기본적으로 `verified: false`입니다. 내용을 검토한 뒤 직접 `verified: true`로 변경하세요.
+- 새 wiki frontmatter는 선택적으로 `claim_status`, `evidence_level`, `last_verified`, `review_due`를 포함할 수 있습니다. 값 정책은 [wiki schema guide](wiki-schema.md)를 따릅니다.
 - `wiki/`는 LLM 전용 영역입니다. 직접 수정하면 다음 `/compile` 시 덮어쓰여질 수 있습니다.
 
 ---
@@ -98,6 +102,8 @@ compiled_date: null
 /ask [질문] --slides      ← Marp 슬라이드 출력
 /ask [질문] --chart       ← matplotlib 차트 스크립트 출력
 /ask [질문] --html        ← Mermaid 다이어그램 포함 HTML 출력
+/ask [질문] --loop        ← 승격 후보만 output에 정리
+/ask [질문] --no-loop     ← deprecated alias; 기본 동작과 동일
 ```
 
 ### 출력
@@ -120,6 +126,7 @@ compiled_date: null
 ### 주의
 
 - wiki에 없는 내용은 추정하지 않고 "위키에 해당 내용 없음"으로 명시합니다.
+- `/ask`는 기본적으로 읽기 전용이며 `wiki/`를 직접 생성하거나 수정하지 않습니다. `--loop`는 `output/`에 승격 후보만 남기며, 실제 반영은 `/review`에서 승인 후 진행합니다.
 - `--slides`는 Marp CLI, `--chart`는 matplotlib이 설치된 경우에만 출력됩니다.
 
 ---
@@ -144,10 +151,12 @@ compiled_date: null
 | `wiki/index.md` 동기화 | 가능 |
 | `wiki/backlinks.md` 정확성 | 가능 |
 | 미검증 파일 (`verified: false`) | 불가 (사람이 직접 검토) |
+| 선택 claim/evidence 필드 (`claim_status`, `evidence_level`, `last_verified`, `review_due`) | 불가 (WARN만 보고) |
 
 ### 출력
 
-`output/lint-report-YYYYMMDD.md`에 상세 결과를 저장합니다.
+- `output/lint-report-YYYYMMDD.md`: 상세 점검 보고서
+- `wiki/_meta/weather.md`: 현재 상태 대시보드인 Knowledge Weather
 
 ### 주의
 
@@ -216,10 +225,13 @@ key_insights:
 ### 동작 방식
 
 1. output 파일을 분석해 "wiki에 없는 새 인사이트"를 식별합니다.
-2. 승격 계획을 보여주고 사람의 확인을 기다립니다 (자동으로 수정하지 않습니다).
-3. 승인하면 `wiki/concepts/`에 새 파일을 생성하거나 기존 파일을 보완합니다.
-4. `wiki/index.md`, `wiki/backlinks.md`를 자동 갱신합니다.
-5. 리뷰한 output 파일 끝에 `## Review Summary`를 추가합니다.
+2. `/ask --loop`가 남긴 `## Promotion Candidates`가 있으면 우선 참고합니다.
+3. 승격 계획을 보여주고 사람의 확인을 기다립니다 (자동으로 수정하지 않습니다).
+4. 승인하면 `wiki/concepts/`에 새 파일을 생성하거나 기존 파일을 보완합니다.
+5. `wiki/index.md`, `wiki/backlinks.md`를 자동 갱신합니다.
+6. 리뷰한 output 파일 끝에 `## Review Summary`를 추가합니다.
+
+신규 승격 페이지는 사람이 검증하기 전까지 `claim_status: inferred`, `evidence_level: ai_synthesis`, `last_verified: null`, `review_due: null`로 시작합니다.
 
 ### 언제 쓰나요?
 
@@ -230,7 +242,8 @@ key_insights:
 
 ## /dev-log
 
-**현재 작업 단계를 `logs/DEV_LOG_YYYYMMDD.md`에 구조화된 형식으로 기록합니다.**
+**현재 작업 단계를 `.work-log/dev/DEV_LOG_YYYYMMDD.md`에 구조화된 형식으로 기록합니다.**
+핵심 결정 요약은 루트 `log.md` 전체 타임라인에도 함께 남깁니다.
 
 ### 구문
 

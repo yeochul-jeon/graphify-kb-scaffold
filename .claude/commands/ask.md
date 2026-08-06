@@ -1,4 +1,4 @@
-wiki 기반 질의응답. 결과를 `output/`에 저장하고 새 인사이트는 wiki에 피드백합니다. Triggers: ask, query, question, search wiki, 질문, 검색, 답변
+wiki 기반 질의응답. 결과를 `output/`에만 저장하고, 승격은 `--loop` 후보 정리 후 `/review`로 처리합니다. Triggers: ask, query, question, search wiki, 질문, 검색, 답변
 
 ## 사용법
 
@@ -7,14 +7,15 @@ wiki 기반 질의응답. 결과를 `output/`에 저장하고 새 인사이트�
 /ask [질문] --slides      # Marp 슬라이드 형식 출력
 /ask [질문] --chart       # matplotlib 차트 포함
 /ask [질문] --html        # 인터랙티브 standalone HTML 출력
-/ask [질문] --no-loop     # Knowledge Loop 건너뛰기 (단순 조회)
+/ask [질문] --loop        # output 끝에 승격 후보만 정리 (wiki 수정 없음)
+/ask [질문] --no-loop     # deprecated alias; 기본 동작과 동일
 ```
 
 ## 처리 순서
 
 ### Step 1: 질문 분석
 
-`$ARGUMENTS`에서 질문과 옵션 플래그 분리 (`--slides`, `--chart`, `--html`, `--no-loop`).
+`$ARGUMENTS`에서 질문과 옵션 플래그 분리 (`--slides`, `--chart`, `--html`, `--loop`, `--no-loop`).
 질문의 핵심 키워드와 관련 개념 파악.
 
 ### Step 2: 관련 wiki 파일 탐색
@@ -112,36 +113,30 @@ HTML 파일 기본 구조:
 - 슬라이드보다 참조/탐색에 적합한 긴 분석 결과에 사용
 - `--slides`와 중복 사용 불가 (둘 중 하나 선택)
 
-### Step 5: 지식 루프 (Knowledge Loop)
+### Step 5: Review 후보 정리
 
-`--no-loop` 플래그가 있으면 이 단계를 건너뛰고 output 파일 끝에 "Knowledge Loop: 건너뜀 (--no-loop)" 을 명시.
+기본 동작은 읽기 전용입니다. `/ask`는 `wiki/`를 직접 생성/수정하지 않습니다.
 
-그 외에는 다음 체크리스트를 수행:
+`--loop` 플래그가 있으면 output 파일 끝에 `## Promotion Candidates` 섹션을 추가합니다:
+- 신규 개념 후보
+- 기존 wiki 보완 후보
+- 출처/근거로 쓰인 wiki 파일
+- 권장 후속 명령: `/review output/<파일명>.md`
 
-1. **누락 개념 페이지 생성**: 답변에서 언급한 개념 중 `wiki/concepts/`에 파일이 없는 것 → stub 페이지 생성
-2. **새 합성 페이지 생성**: 2개 이상의 위키 페이지를 새로운 방식으로 연결·합성한 인사이트 → 새 wiki 페이지 생성
-3. **기존 페이지 보완**: 답변 과정에서 기존 wiki 페이지의 내용을 수정·보완할 사항 발견 시 → 해당 파일 업데이트
-4. 위 3가지 모두 해당 없으면 "피드백 없음"으로 명시
+`--loop`가 없으면 output 파일 끝에 `Knowledge Promotion: not requested`를 기록합니다.
+`--no-loop`는 하위 호환 플래그로 허용하되 기본 동작과 동일하게 처리합니다.
 
-output 파일 끝에 반드시 다음 섹션 추가:
+### Step 6: 리뷰 후속 안내
 
-```markdown
----
-## Knowledge Loop Summary
-- 생성된 wiki 페이지: [파일 목록 또는 "없음"]
-- 업데이트된 wiki 페이지: [파일 목록 또는 "없음"]
-```
-
-### Step 6: output 파일을 wiki에 피드백
-
-답변 파일을 wiki에서 참조 가능하도록:
-- `wiki/index.md` 최근 변경 이력에 추가 (선택)
+승격 후보가 있더라도 `/ask`는 output 파일에 후보만 남긴다.
+wiki 반영은 사람이 `/review output/<파일명>.md`를 실행하고 승인한 뒤에만 수행한다.
 
 ### 완료 후 보고
 
 - 생성된 output 파일 경로
 - 참조한 wiki 파일 목록
-- wiki에 추가/업데이트한 내용 (있는 경우)
+- 승격 후보 요약 또는 "없음"
+- wiki 변경: 없음 (`/review` 승인 전까지 `/ask`는 읽기 전용)
 
 ### 작업 로그 업데이트
 
@@ -151,7 +146,7 @@ output 파일 끝에 반드시 다음 섹션 추가:
 ## [YYYY-MM-DD] ask | [질문 요약]
 - refs: [참조한 wiki 파일들]
 - output: output/[파일명]
-- loop: [생성/업데이트된 wiki 파일 또는 "없음"]
+- promotion: [승격 후보 요약 또는 "요청 안 함"]
 ```
 
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep

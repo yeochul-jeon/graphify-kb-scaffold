@@ -7,6 +7,7 @@
 
 # 우회 플래그 확인
 if [ "${ALLOW_WIKI_EDIT}" = "1" ]; then
+  echo "[wiki guard] bypassed: ${ALLOW_WIKI_EDIT_REASON:-no reason provided}"
   exit 0
 fi
 
@@ -15,6 +16,16 @@ WIKI_STAGED=$(git diff --cached --name-only | grep "^wiki/" | grep -v "^wiki/_me
 
 if [ -z "$WIKI_STAGED" ]; then
   exit 0
+fi
+
+if [ -n "$CI" ] || [ ! -t 0 ]; then
+  if [ "${ALLOW_WIKI_EDIT}" = "1" ]; then
+    echo "[wiki guard] bypassed in non-interactive mode: ${ALLOW_WIKI_EDIT_REASON:-no reason provided}"
+    exit 0
+  fi
+  echo "[wiki guard] wiki/ files are staged in a non-interactive environment."
+  echo "Use reviewed /compile or /review output, or set ALLOW_WIKI_EDIT=1 with optional ALLOW_WIKI_EDIT_REASON."
+  exit 1
 fi
 
 # 경고 출력

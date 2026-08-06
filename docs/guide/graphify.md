@@ -45,7 +45,7 @@ pip install graphifyy
 |---|---|---|
 | ~10개 파일 | wiki/index.md 한 번 읽으면 충분 | 큰 차이 없음 |
 | ~60개 파일 (현재) | 관련 파일을 일일이 찾아야 함 | god nodes/communities로 핵심 파악 |
-| 100개+ 파일 | Claude가 전체 컨텍스트를 읽다가 한계 도달 | GRAPH_REPORT.md 한 파일로 전체 지도 파악 |
+| 100개+ 파일 | Claude가 전체 컨텍스트를 읽다가 한계 도달 | graphify query로 관련 source_file을 좁힌 뒤 필요 시 GRAPH_REPORT.md로 전체 지도 파악 |
 
 현재 이 볼트: **372 노드 · 644 엣지 · 22 커뮤니티** (`graphify-out/GRAPH_REPORT.md` 기준)
 
@@ -58,7 +58,7 @@ pip install graphifyy
 | 파일 | 역할 |
 |---|---|
 | `graph.html` | 브라우저에서 볼 수 있는 인터랙티브 지식그래프 |
-| `GRAPH_REPORT.md` | god nodes · 커뮤니티 요약 · Knowledge Gaps (LLM 탐색 전 먼저 읽음) |
+| `GRAPH_REPORT.md` | god nodes · 커뮤니티 요약 · Knowledge Gaps (query 결과 이후 전역 지형이 필요할 때 확인) |
 | `graph.json` | 노드·엣지 전체 데이터 (GraphRAG · 외부 도구 연동) |
 | `cache/*.json` | SHA256 기반 LLM 응답 캐시 (중복 호출 방지) |
 | `transcripts/` | 영상·오디오 파일 전사(transcription) 캐시 (`[video]` extras 사용 시) |
@@ -87,7 +87,7 @@ open graphify-out/graph.html
 - **Suggested Questions** (그래프가 답하기 좋은 질문)
 
 ```bash
-# CLAUDE.md 규칙: 아키텍처/코드베이스 질문 전에 이 파일을 먼저 읽는다
+# query 결과로 전역 지형이 더 필요할 때 확인한다
 cat graphify-out/GRAPH_REPORT.md
 ```
 
@@ -250,11 +250,11 @@ graphify는 아래 파일 형식을 모두 그래프 노드로 처리합니다.
 
 `CLAUDE.md`에는 두 가지 graphify 관련 규칙이 있습니다:
 
-**규칙 1**: 아키텍처·코드베이스 질문 전에 `graphify-out/GRAPH_REPORT.md`를 먼저 읽습니다.
+**규칙 1**: 아키텍처·코드베이스·개념 질문 전에 `scripts/graphify-py.sh -m graphify query "<질문>" --budget 1500`을 먼저 실행합니다.
 
-**규칙 2**: `.claude/settings.json`의 PreToolUse 훅이 Glob/Grep 호출 시 `GRAPH_REPORT.md`를 읽도록 자동 유도합니다.
+**규칙 2**: `.claude/settings.json`의 PreToolUse 훅이 Glob/Grep 호출 시 query-first 탐색을 자동 유도합니다.
 
-이 덕분에 Claude가 질문에 답할 때 전체 파일을 일일이 뒤지지 않고 그래프 지도를 활용해 관련 파일을 빠르게 찾습니다.
+탐색 순서: `graphify query` → query 결과의 `source_file` → 필요 시 `wiki/index.md` 태그 프리페이스 → 필요 시 `graphify-out/GRAPH_DIGEST.md` → 최후에 `GRAPH_REPORT.md`.
 
 ---
 
@@ -313,4 +313,4 @@ cat graphify-out/cost.json
 | [graphify.net/kr/](https://graphify.net/kr/) | 공식 홈페이지 (한국어) |
 | [github.com/sponsors/safishamsi](https://github.com/sponsors/safishamsi) | 후원 |
 
-> 버전이 올라간 경우: `bash scripts/regen-graphify-skill.sh` 로 SKILL.md 를 갱신하세요.
+> graphify 스킬 수정 시: `.claude/skills/graphify/SKILL.md` (core) 와 `.claude/skills/graphify/references/advanced-subcommands.md` (고급 서브커맨드) 를 직접 편집하세요.

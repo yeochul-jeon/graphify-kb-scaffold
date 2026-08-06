@@ -1,4 +1,4 @@
-현재 작업 단계를 `logs/DEV_LOG_{yyyymmdd}.md`에 구조화된 형식으로 기록합니다. Triggers: dev-log, log step, record progress, 개발 로그, 작업 기록
+현재 작업 단계를 `.work-log/dev/DEV_LOG_YYYYMMDD.md`에 구조화된 형식으로 기록하고, 핵심 결정 요약을 루트 `log.md`에 남깁니다. Triggers: dev-log, log step, record progress, 개발 로그, 작업 기록
 
 ## 사용법
 
@@ -13,7 +13,7 @@
 
 ### Step 1: 오늘 날짜의 DEV_LOG 파일 확인
 
-- 파일명: `logs/DEV_LOG_{오늘날짜 yyyymmdd}.md` (예: `logs/DEV_LOG_20260406.md`)
+- 파일명: `.work-log/dev/DEV_LOG_YYYYMMDD.md` (예: `.work-log/dev/DEV_LOG_20260406.md`)
 - 파일이 없으면 아래 헤더로 신규 생성:
   ```markdown
   # DEV_LOG — YYYY-MM-DD
@@ -36,9 +36,9 @@
 - **해결**: 오류/문제를 어떻게 해결했는지 (없으면 "-")
 - **메모**: 다음 단계에서 참고할 사항, 주의점, 잔여 과제
 
-### Step 3: logs/DEV_LOG_{yyyymmdd}.md 항목 추가
+### Step 3: .work-log/dev/DEV_LOG_YYYYMMDD.md 항목 추가
 
-`logs/DEV_LOG_{yyyymmdd}.md` 하단(`<!-- 아래부터 새 단계 추가 -->` 주석 아래)에 다음 형식으로 append:
+`.work-log/dev/DEV_LOG_YYYYMMDD.md` 하단(`<!-- 아래부터 새 단계 추가 -->` 주석 아래)에 다음 형식으로 append:
 
 ```markdown
 ## [단계명] — YYYY-MM-DD

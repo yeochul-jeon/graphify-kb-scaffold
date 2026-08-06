@@ -263,7 +263,7 @@ Claude는 이 값을 자동으로 변경하지 않습니다. 검증은 사람의
 ## 해결이 안 될 때
 
 1. `./scripts/kb.sh status`로 현재 볼트 상태를 확인하세요.
-2. `logs/DEV_LOG_YYYYMMDD.md`에서 최근 작업 이력을 확인하세요.
+2. `.work-log/dev/DEV_LOG_YYYYMMDD.md`에서 최근 작업 이력을 확인하세요.
 3. `graphify-out/GRAPH_REPORT.md`의 Knowledge Gaps 섹션에서 연결 문제를 파악하세요.
 4. Claude Code 세션에서 오류 메시지를 붙여넣고 질문하세요.
 

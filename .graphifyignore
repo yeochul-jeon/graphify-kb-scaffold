@@ -1,2 +1,22 @@
 # Obsidian Web Clipper 원본 아카이브 — 그래프 인덱싱 대상 아님
 raw/Clippings/
+
+# 민감 원본 자료 — 그래프 인덱싱 대상 아님
+raw/private/**
+raw/company/**
+raw/medical/**
+raw/finance/**
+
+# 생성된 메타 뷰 — 개념 노드가 아니므로 그래프 인덱싱 대상 아님 (gravity well 방지, 2026-07-09)
+wiki/_meta/**
+
+# 세션 산출물·로그 — query 신호를 흐리는 노이즈 (2026-06-26)
+# (output/ 답변은 항상 명시적 경로로 읽으므로 인덱싱 불필요)
+output/
+log.md
+.work-log/
+dev-logs/
+.claude/reports/   # 핸드오프·세션 보고서 — 세션 메타 산출물, 인덱싱 불필요 (2026-06-26)
+
+# 그래프 자기참조 산출물 — DIGEST·REPORT·backlinks 를 다시 인덱싱하지 않음 (2026-06-26)
+graphify-out/

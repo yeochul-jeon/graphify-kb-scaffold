@@ -59,7 +59,6 @@ SYNC_ITEMS=(
   "file:scripts/setup-hooks.sh"
   "file:scripts/graphify-bootstrap.sh"
   "file:scripts/graphify-py.sh"
-  "file:scripts/regen-graphify-skill.sh"
   "file:scripts/sync-scaffold.sh"
 )
 

@@ -1,6 +1,5 @@
 # 생성된 출력물 — 항상 명시적 경로로 읽으므로 인덱싱 불필요
 output/
-logs/
 .work-log/
 
 # 바이너리/스크립트 — LLM이 읽을 필요 없음
@@ -12,7 +11,21 @@ logs/
 *.gif
 *.pdf
 
-# 첨부 파일
+# 첨부 파일 — 원천소스 보존용(raw/attachments 단일 위치). 명시적 요청 시에만 경로 지정해 읽기
 raw/attachments/
-wiki/attachments/
 raw/Clippings/
+
+# 민감 원본 자료 — 명시적 요청 없이는 Claude direct scan 대상 아님
+raw/private/**
+raw/company/**
+raw/medical/**
+raw/finance/**
+
+# 그래프 파이프라인 아티팩트 — 대용량, 에이전트가 직접 읽을 필요 없음
+# (요약은 graphify-out/GRAPH_DIGEST.md, 상세는 GRAPH_REPORT.md 참조)
+graphify-out/*.json
+graphify-out/cache/
+wiki/graphify-out/
+
+# 루트 작업 로그 — 명시적 요청 시에만 읽기
+log.md
