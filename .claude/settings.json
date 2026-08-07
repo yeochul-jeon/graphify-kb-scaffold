@@ -85,7 +85,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -f scripts/auto-graphify.sh ]; then bash scripts/auto-graphify.sh || true; fi"
+            "command": "if [ -f scripts/auto-graphify.sh ]; then bash scripts/auto-graphify.sh; fi"
           }
         ]
       }
