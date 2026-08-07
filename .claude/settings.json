@@ -43,7 +43,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash scripts/save-checkpoint.sh pre-compact 2>/dev/null || true"
+            "command": "if [ -f scripts/save-checkpoint.sh ]; then bash scripts/save-checkpoint.sh pre-compact 2>/dev/null || true; fi"
           }
         ]
       }
@@ -65,7 +65,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash scripts/save-checkpoint.sh post-bash 2>/dev/null || true"
+            "command": "if [ -f scripts/save-checkpoint.sh ]; then bash scripts/save-checkpoint.sh post-bash 2>/dev/null || true; fi"
           }
         ]
       },
@@ -74,7 +74,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash scripts/wiki-dirty-flag.sh 2>/dev/null || true"
+            "command": "if [ -f scripts/wiki-dirty-flag.sh ]; then bash scripts/wiki-dirty-flag.sh 2>/dev/null || true; fi"
           }
         ]
       }

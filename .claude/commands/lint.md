@@ -110,13 +110,16 @@ wiki 품질 자가 점검. 깨진 링크, 고아 파일, 중복, 오래된 콘�
 # 주의: [[ ]] 필수. [ "$d" \< "$TODAY" ] 는 zsh 에서 "condition expected: <" 로 깨진다.
 #       ISO 날짜라 문자열 비교가 곧 날짜 비교다.
 TODAY=$(date '+%Y-%m-%d')
+# 값 추출은 키 뒤 공백 수와 무관해야 한다. `sed 's/key: //'` 는 `: ` 두 글자가 없으면
+# 치환하지 않아 값 없는 키에서 **키 문자열 자체**를 값으로 돌려준다 (원장 #36).
+fmval() { sed -n "s/^$2:[[:space:]]*//p" "$1" | head -1; }
+# "값 없음" 은 null 하나가 아니다 — 빈 문자열·''·"" 를 모두 포함해야 한다.
+isnull() { case "$1" in ''|null|"''"|'""') return 0 ;; *) return 1 ;; esac; }
 for f in wiki/concepts/*.md wiki/topics/*.md; do
-  v=$(grep -m1 '^verified:' "$f"|sed 's/verified: //')
-  l=$(grep -m1 '^last_verified:' "$f"|sed 's/last_verified: //')
-  d=$(grep -m1 '^review_due:' "$f"|sed 's/review_due: //')
-  [[ "$v" == "false" && "$l" != "null" ]] && echo "(a) 승인대기: $f"
-  [[ "$v" == "true"  && "$l" == "null" ]] && echo "(b) 결함: $f"
-  [[ "$d" != "null"  && "$d" < "$TODAY" ]] && echo "(c) 만료($d): $f"
+  v=$(fmval "$f" verified); l=$(fmval "$f" last_verified); d=$(fmval "$f" review_due)
+  [[ "$v" == "false" ]] && ! isnull "$l" && echo "(a) 승인대기: $f"
+  [[ "$v" == "true"  ]] &&   isnull "$l" && echo "(b) 결함: $f"
+  ! isnull "$d" && [[ "$d" < "$TODAY" ]] && echo "(c) 만료($d): $f"
 done
 ```
 
