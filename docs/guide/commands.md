@@ -51,8 +51,12 @@ source_url: https://...
 ingested_date: 2026-04-06
 compiled: false   ← 아직 wiki로 변환 안 됨
 compiled_date: null
+verbatim: true    ← 가져온 원문 그대로인가 (요약·발췌가 섞였으면 false + note)
+verbatim_checked: 2026-04-06
 ---
 ```
+
+> `verbatim` 은 **수집한 그날 채웁니다.** 받은 것이 곧 원본인 순간이라 확인 비용이 없고, 나중에 다시 받으면 그날 판이 와서 *"출처가 바뀐 것"* 과 *"저장분이 요약본인 것"* 을 가를 수 없습니다. 규격: `.claude/rules/raw-ingest.md` §`verbatim`
 
 ### 주의
 
