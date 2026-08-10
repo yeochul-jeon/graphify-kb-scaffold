@@ -2,6 +2,10 @@
 # graphify python 인터프리터 탐지 & 설치 래퍼.
 # SKILL.md Step 1 블록의 command_substitution을 Claude Code 밖에서 처리한다.
 #
+# 사용법: scripts/graphify-bootstrap.sh [INPUT_PATH]
+#   INPUT_PATH 를 주면 graphify-out/.graphify_root 에 절대경로를 기록한다
+#   (인자 없는 `graphify update` 가 스캔 루트를 찾는 데 쓴다 — SKILL.md 0.8.39 Step 1 대응).
+#
 # 설치 우선순위 (graphify 미발견 시):
 #   1. uv tool install graphifyy   (uv 있으면)
 #   2. pipx install graphifyy      (pipx 있으면)
@@ -39,3 +43,9 @@ fi
 mkdir -p graphify-out
 "$PYTHON" -c "import sys; open('graphify-out/.graphify_python', 'w').write(sys.executable)"
 echo "✓ Python 경로 기록 완료: $PYTHON" >&2
+
+# 스캔 루트 기록 (인자를 준 경우에만) — 인자 없는 `graphify update` 가 참조한다.
+if [ "$#" -ge 1 ] && [ -d "$1" ]; then
+    (cd "$1" && pwd) > graphify-out/.graphify_root
+    echo "✓ 스캔 루트 기록 완료: $(cat graphify-out/.graphify_root)" >&2
+fi

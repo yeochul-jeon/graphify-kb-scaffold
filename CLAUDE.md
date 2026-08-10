@@ -11,7 +11,8 @@ Rules:
 - 루트 md (log.md, README.md) 는 질문이 해당 파일을 명시할 때만 읽는다; 일반 질의는 wiki/ 와 graphify-out/GRAPH_DIGEST.md 로 제한
 - After modifying code files in this session, run `bash scripts/graphify-build.sh` to keep the graph and GRAPH_DIGEST.md current (wrapper: update + DIGEST regen)
 - /graphify skill은 프로젝트 오버라이드(.claude/skills/graphify/SKILL.md)를 사용하며, python 호출은 scripts/graphify-py.sh 경유.
-- graphify 스킬은 이 프로젝트가 유일한 소스 오브 트루스다. 수정은 `.claude/skills/graphify/SKILL.md` (core) 와 `.claude/skills/graphify/references/advanced-subcommands.md` (고급 서브커맨드) 를 직접 편집.
+- graphify 스킬은 이 프로젝트가 유일한 소스 오브 트루스다 (현재 upstream **0.8.39** 기반 포크). 수정은 `.claude/skills/graphify/SKILL.md` (core) 와 `.claude/skills/graphify/references/*.md` (8분할 lazy-load) 를 직접 편집.
+- ⚠️ **전역 `graphify install` 금지** — `--project` 없이 실행하면 `~/.claude/skills/graphify/` 와 `~/.claude/CLAUDE.md` 등록 블록을 만들어 이 포크를 가린다. 반드시 `graphify install --project`. 전역 PreToolUse 훅이 차단하지만 터미널 직접 실행은 못 막는다. 경위: docs/guide/graphify.md §전역 스코프 금지
 - scaffold 동기화: `bash scripts/sync-scaffold.sh [--apply]` 로 템플릿 자산을 graphify-kb-scaffold에 단방향 재전파. 가이드: docs/guide/scaffold-sync.md
 
 ## AI Memory Boundaries

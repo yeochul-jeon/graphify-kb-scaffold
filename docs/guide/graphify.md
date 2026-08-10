@@ -304,7 +304,7 @@ cat graphify-out/cost.json
 
 ## 업스트림 레퍼런스
 
-이 프로젝트가 사용하는 graphify 상위 소스 (v0.4.13, MIT 라이선스, 2026-04-14 기준):
+이 프로젝트가 사용하는 graphify 상위 소스 (스킬 포크 기준 v0.8.39, MIT 라이선스, 2026-08-10 기준):
 
 | 링크 | 내용 |
 |---|---|
@@ -313,4 +313,72 @@ cat graphify-out/cost.json
 | [graphify.net/kr/](https://graphify.net/kr/) | 공식 홈페이지 (한국어) |
 | [github.com/sponsors/safishamsi](https://github.com/sponsors/safishamsi) | 후원 |
 
-> graphify 스킬 수정 시: `.claude/skills/graphify/SKILL.md` (core) 와 `.claude/skills/graphify/references/advanced-subcommands.md` (고급 서브커맨드) 를 직접 편집하세요.
+> graphify 스킬 수정 시: `.claude/skills/graphify/SKILL.md` (core) 와 `.claude/skills/graphify/references/*.md` (8분할 lazy-load) 를 직접 편집하세요.
+
+## 전역 스코프 금지
+
+graphify 스킬은 **repo-local 사본만** 쓴다. 사용처 3곳은 각자 사본을 갖는다:
+`graphify-kb`(포크) · `graphify-kb-scaffold`(sync 대상) · `NextStyle/wiki`(바닐라).
+
+### 왜 금지인가
+
+`graphify install` 을 `--project` 없이 실행하면 CLI 가 두 가지를 **전역에** 만든다
+(`graphify/__main__.py:656-657`):
+
+| 산출물 | 영향 |
+|---|---|
+| `~/.claude/skills/graphify/` | graphify 를 안 쓰는 **모든 프로젝트**에 스킬이 로드됨 |
+| `~/.claude/CLAUDE.md` 등록 블록 | 하드코딩된 전역 경로가 모든 세션 컨텍스트에 주입됨 |
+
+게다가 전역 사본이 프로젝트 오버라이드를 **가린다**. 2026-08-10 조사에서
+이 프로젝트가 자기 포크(0.4.12)가 아니라 전역(0.8.39)으로 돌고 있던 것이 확인됐다.
+
+### 재발 이력과 방어선
+
+2026-04-16 커밋 `8093488` 이 전역 스킬·CLAUDE.md 블록을 제거했으나 6월에 되살아났다.
+원인 사슬: CLI 가 `install`/`uninstall`/`hook-check` 를 뺀 **모든 명령**에서 버전을 대조해
+`Run 'graphify install' to update` 경고를 띄운다(`__main__.py:2091`) → 프로젝트 규칙이
+강제하는 `graphify-build.sh`(내부적으로 `graphify update`)마다 경고가 뜸 → 지시대로 실행 → 전역 부활.
+
+방어선 3중:
+1. **원인 제거** — 포크를 upstream 과 같은 버전으로 유지 (현재 0.8.39). 버전이 맞으면 경고가 안 뜬다.
+2. **차단** — 전역 `~/.claude/hooks/block-global-graphify-install.sh` (PreToolUse/Bash).
+   `--project`·`--help`·`-h` 없는 `graphify install` 을 exit 2 로 막는다.
+3. **탐지** — 전역 SessionStart 훅이 `~/.claude/skills/graphify` 존재 시 경고한다.
+   터미널에서 직접 친 경우처럼 (2)가 못 보는 경로를 잡는다.
+
+### upstream 버전 추적 · 재포크 절차
+
+`regen-graphify-skill.sh` 는 `8093488` 에서 삭제됐다. 수동 절차:
+
+```bash
+graphify --version                     # upstream 현재 버전
+cat .claude/skills/graphify/.graphify_version   # 포크 기준 버전
+```
+
+다르면 재포크한다 — upstream 원본을 가져와 **델타 3종만** 재적용:
+
+1. **Step 1 탐지 블록** → `bash scripts/graphify-bootstrap.sh INPUT_PATH` 한 줄.
+   Interpreter guard 블록도 `[ -f graphify-out/.graphify_python ] || bash scripts/graphify-bootstrap.sh`.
+2. **인터프리터 호출** → `$(cat graphify-out/.graphify_python)` 및 bare `python3` 을
+   `scripts/graphify-py.sh` 로 치환.
+3. **잔여 `$(...)`** 제거 — `PROJECT_ROOT=$(cat ...)`, `LOCAL_PATH=$(graphify clone ...)` 처럼
+   값을 셸 변수에 담는 곳은 "출력해서 읽고 직접 치환" 방식으로 바꾼다.
+
+> 델타의 목적은 하나다: `$(...)` command substitution 이 Claude Code 승인 프롬프트를
+> 유발하므로 치환을 스킬 밖(스크립트 내부)에서 처리한다.
+
+**재포크 사후 검사** (눈으로 넘기지 말 것):
+
+```bash
+grep -rn '\$(' .claude/skills/graphify/SKILL.md .claude/skills/graphify/references/*.md
+#   → 실행 블록 내 0건. 산문 설명(`$(...)` 표기)만 남아야 한다.
+grep -rn 'python3\|\$PYTHON' .claude/skills/graphify/SKILL.md .claude/skills/graphify/references/*.md
+#   → 2건만 정상: SKILL.md 의 치환 규약 설명 1건,
+#      references/exports.md 의 Claude Desktop MCP 설정 JSON 1건
+#      (외부 앱이 읽는 설정이라 상대경로 래퍼로 바꾸면 안 된다)
+```
+
+마지막으로 `.graphify_version` 을 새 버전으로 갱신하고,
+`.agents/skills/graphify/` (Codex 용 사본) 에 같은 내용을 복사한 뒤
+`bash scripts/sync-scaffold.sh --apply` 로 scaffold 에 전파한다.
