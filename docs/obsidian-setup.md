@@ -139,7 +139,7 @@ published: {{published|date:"YYYY-MM-DD"}}
 Chrome에서 Web Clipper 아이콘 클릭
    ↓
 raw/Clippings/[kebab-제목].md 저장          ← 미처리 인박스
-   ↓
+   ↓                                        (남아 있으면 다음 세션 시작 때 한 줄 알림)
 Claude Code에서: /ingest raw/Clippings/[파일]   ← 승격 (raw/ 로 이동)
    · 중복 검사(URL 축 + 제목 축) · verbatim 판정
    · tags 를 저장소 어휘에서 선택 · 이미지 재배치
@@ -153,7 +153,7 @@ wiki/concepts/ 또는 wiki/topics/ 파일 생성
 Obsidian 그래프 뷰에서 지식 네트워크 시각화
 ```
 
-> **인박스를 모아뒀다가 묶어서 승격해도 된다.** `ls raw/Clippings/` 로 쌓인 클립을 확인한다. 관련 자료를 세트로 모아 컴파일하면 개별 아티클 단위보다 결과가 낫다는 것이 `wiki/concepts/satellite-vault-architecture.md` §00 Inbox 버퍼 의 관찰이다.
+> **인박스를 모아뒀다가 묶어서 승격해도 된다.** 쌓인 클립은 `git ls-files --others --exclude-standard raw/Clippings/` 로 확인한다 — `ls` 는 레거시 파일 1건 때문에 인박스가 비어도 1 을 준다(사유: `.claude/rules/raw-ingest.md` §Web Clipper 인박스). 미처리가 남아 있으면 **세션 시작 때 한 줄로 알려준다**(0건이면 침묵). 관련 자료를 세트로 모아 컴파일하면 개별 아티클 단위보다 결과가 낫다는 것이 `wiki/concepts/satellite-vault-architecture.md` §00 Inbox 버퍼 의 관찰이다.
 
 ### 이 경로가 여는 것 — 인증 벽
 

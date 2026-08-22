@@ -57,6 +57,15 @@
             "command": "rm -f .work-log/.graphify-hint-seen 2>/dev/null; [ -f .work-log/last-session.md ] && python3 -c \"import json,sys; body=open('.work-log/last-session.md').read()[:1500]; print(json.dumps({'hookSpecificOutput':{'hookEventName':'SessionStart','additionalContext':'[Last session]\\n'+body}}))\" || true"
           }
         ]
+      },
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f scripts/clippings-inbox.sh ]; then bash scripts/clippings-inbox.sh; fi"
+          }
+        ]
       }
     ],
     "PostToolUse": [

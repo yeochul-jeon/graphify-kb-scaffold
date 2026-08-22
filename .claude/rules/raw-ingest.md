@@ -183,7 +183,9 @@ curl -sL https://raw.githubusercontent.com/wiki/<owner>/<repo>/<Page>.md   # Git
 
 클리퍼는 `raw/Clippings/` 에 떨군다. 거기서 `raw/*.md` 로 올리는 것이 **승격**이며, `/ingest <경로>`(입력 유형 5번)가 수행한다.
 
-🔴 **승격은 복사가 아니라 이동이다.** 복사하면 원본과 승격본이 `title`·`source_url` 을 공유하는데, `scripts/check-title-dup.py:124` 는 `raw/**/*.md` 를 재귀 스캔하며 `_templates`/`attachments` 만 제외한다 — **`Clippings/` 는 검사 대상**이라 승격본이 매 회차 **자기 원본과 중복 후보**로 재부상한다. 억제하려면 원본에 `duplicate_url_group` 을 박아야 하는데 그건 아래 §금지 사항(본문 수정 금지) 위반이다. **이동하면 쌍 자체가 생기지 않는다.**
+> **알림 장치** (2026-08-22 신설): 미처리 클립이 남아 있으면 `scripts/clippings-inbox.sh` 가 세션 시작 때 한 줄로 알린다(`SessionStart` 훅, **0건이면 침묵**). 카운트는 **git 미추적** 기준이다 — 아래 §레거시 예외 가 tracked 라 `ls raw/Clippings/ | wc -l` 은 인박스가 비어 있어도 **1** 을 준다. 설계 근거·기각안은 `docs/plan/plans/2026-08-22-clippings-inbox-notify.md` 가 단일 출처다.
+
+🔴 **승격은 복사가 아니라 이동이다.** 복사하면 원본과 승격본이 `title`·`source_url` 을 공유하는데, `scripts/check-title-dup.py:123` 이 `raw/**/*.md` 를 재귀 스캔하고 `:124` 가 `_templates`/`attachments` 만 제외한다 — **`Clippings/` 는 검사 대상**이라 승격본이 매 회차 **자기 원본과 중복 후보**로 재부상한다. 억제하려면 원본에 `duplicate_url_group` 을 박아야 하는데 그건 아래 §금지 사항(본문 수정 금지) 위반이다. **이동하면 쌍 자체가 생기지 않는다.**
 
 > ⚠️ **`git mv` 를 무조건문으로 쓰지 않는다.** 방금 캡처된 클립은 git 미추적이고 "캡처 → 즉시 승격" 이 기본 흐름이라 **승격 시점 미추적이 일반 케이스**다. `git mv` 는 미추적 파일에 `fatal: not under version control` 로 실패한다 — 추적 중이면 `git mv`, 아니면 `mv`.
 
