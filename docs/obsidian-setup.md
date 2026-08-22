@@ -44,29 +44,49 @@
 
 ### 저장 위치 설정
 
-| 설정            | 값                    |
-| ------------- | -------------------- |
-| Vault         | `my-knowledge-base`  |
-| Note location | `raw/`               |
-| Note name     | `{{title}}` (제목 그대로) |
-| File format   | Markdown             |
+| 설정            | 값                            |
+| ------------- | ---------------------------- |
+| Vault         | `my-knowledge-base` (실제 볼트명과 정확히 일치해야 한다) |
+| Note location | `raw/Clippings/`             |
+| Note name     | `{{title\|kebab\|safe_name}}` |
+| File format   | Markdown                     |
+
+> **왜 `raw/` 가 아니라 `raw/Clippings/` 인가.** `raw/Clippings/` 는 **미처리 캡처 인박스**다 — 클립은 여기 떨어지고, `/ingest` 승격으로 `raw/` 로 **이동**한 뒤에야 그래프·컴파일 대상이 된다. 규정은 `.claude/rules/raw-ingest.md` §Web Clipper 인박스 가 단일 출처다.
+
+> **왜 `{{title}}` 이 아닌가.** 공백 든 파일명은 실제로 저장소 파서를 깨뜨린 전례가 있다(lint 38회차). `kebab` 필터가 공백·언더스코어를 `-` 로 바꾸고 소문자화하며, `safe_name` 이 `/ : # ^ [ ]` 등 파일시스템·Obsidian 금지문자를 지운다. **`kebab` 은 비ASCII를 버리지 않으므로 한글 제목도 안전하다**(음차 변환은 하지 않는다 — 공백만 하이픈이 된다). 어차피 최종 파일명은 승격 단계가 다시 정하므로, 인박스 파일명은 **파서 안전**만 만족하면 된다.
+
+> **도메인별 템플릿 자동 선택**: Web Clipper 의 **Template triggers** 에 URL 패턴을 한 줄씩 넣으면 그 도메인에서 해당 템플릿이 자동 발동한다(예: YouTube·X 는 다른 템플릿).
 
 ### 템플릿 설정
 
-Web Clipper에서 아래 템플릿을 사용하면 raw 파일에 자동으로 올바른 frontmatter가 추가된다:
+템플릿은 **브라우저가 정직하게 채울 수 있는 필드만** 담는다. 나머지는 승격(`/ingest`) 단계가 채운다.
 
 ```
 ---
 title: {{title}}
 source_url: {{url}}
-ingested_date: {{date:YYYY-MM-DD}}
-compiled: false
-compiled_date: null
-tags: []
+ingested_date: {{date|date:"YYYY-MM-DD"}}
+author: {{author}}
+published: {{published|date:"YYYY-MM-DD"}}
 ---
 
 {{content}}
 ```
+
+**왜 이것만인가** — 나머지 필수 필드는 브라우저가 채우면 거짓값이 박힌다:
+
+| 필드 | 클리퍼가 못 채우는 이유 |
+|---|---|
+| `verbatim` / `verbatim_checked` | 규칙이 **기본값을 금지**한다 — 대조 없이 `true` 가 찍히는 것을 막기 위함. 승격 시점에 판정한다 |
+| `tags` | 어휘를 **원문이 아니라 저장소에서** 가져와야 한다(`raw/_templates/raw-template.md` 참조). 브라우저는 저장소를 못 본다 — Interpreter(LLM 프롬프트 변수)도 저장소 접근이 없어 이 문제를 풀지 못한다 |
+| `compiled` / `compiled_date` | `/compile` 이 관리하는 파이프라인 플래그다 |
+| `images` | 첨부는 `raw/attachments/<소스명>/` 로 재배치되며 그 경로는 승격 시점에 정해진다 |
+
+> 🔴 **`{{date:YYYY-MM-DD}}` 로 쓰지 마라.** 그건 Obsidian 코어 템플릿 문법이고 Web Clipper 는 `date:YYYY-MM-DD` 를 **변수 이름 전체**로 읽어 `Unknown variable` 로 실패한다(2026-08-22 실측). 날짜 형식은 **`date` 필터**로 준다 — `{{date|date:"YYYY-MM-DD"}}`.
+
+> **속성 타입도 맞춰라.** Web Clipper 의 속성 타입이 YAML 직렬화를 바꾼다 — `author` 가 **List** 면 `author:` 아래 항목으로 떨어져 스칼라를 기대하는 raw 규격과 어긋난다. `title`·`source_url`·`author` 는 **텍스트**, `ingested_date`·`published` 는 **날짜**(«날짜 & 시간» 아님)로 둔다.
+
+`author`·`published` 는 페이지 메타데이터에서 나오므로 값이 있으면 채워지고, 없으면 빈 값이 된다 — 빈 값은 승격 시 지운다.
 
 **템플릿 적용 방법:**
 1. Web Clipper Settings → **Templates** 탭
@@ -114,11 +134,17 @@ tags: []
 ## 5. 작업 흐름 (Web Clipper → wiki)
 
 ```
-웹 페이지 발견
+웹 페이지 발견 (로그인 상태 그대로)
    ↓
 Chrome에서 Web Clipper 아이콘 클릭
    ↓
-raw/[제목].md 자동 저장 (compiled: false 포함)
+raw/Clippings/[kebab-제목].md 저장          ← 미처리 인박스
+   ↓
+Claude Code에서: /ingest raw/Clippings/[파일]   ← 승격 (raw/ 로 이동)
+   · 중복 검사(URL 축 + 제목 축) · verbatim 판정
+   · tags 를 저장소 어휘에서 선택 · 이미지 재배치
+   ↓
+raw/[kebab-제목].md (frontmatter 완비)
    ↓
 Claude Code에서: /compile
    ↓
@@ -127,6 +153,14 @@ wiki/concepts/ 또는 wiki/topics/ 파일 생성
 Obsidian 그래프 뷰에서 지식 네트워크 시각화
 ```
 
+> **인박스를 모아뒀다가 묶어서 승격해도 된다.** `ls raw/Clippings/` 로 쌓인 클립을 확인한다. 관련 자료를 세트로 모아 컴파일하면 개별 아티클 단위보다 결과가 낫다는 것이 `wiki/concepts/satellite-vault-architecture.md` §00 Inbox 버퍼 의 관찰이다.
+
+### 이 경로가 여는 것 — 인증 벽
+
+`/ingest <URL>` 의 수집 3티어(Jina Reader → raw HTML → WebFetch)는 **전부 익명 요청**이라 로그인월·페이월·403/402 로 막힌 출처를 열지 못한다. 2026-08-22 실측으로 `raw/*.md` **18건**이 그 이유로 스텁이거나 반쪽이다.
+
+**Web Clipper 는 사용자의 로그인 세션 안에서 돌기 때문에 이 계열을 여는 유일한 경로다.** 공개 URL 은 `/ingest <URL>` 이 더 싸므로(에이전트가 페이지를 컨텍스트로 읽지 않는다) 그대로 쓰고, 클리퍼는 막힌 출처에 쓴다.
+
 ---
 
 ## 6. 오염 방지 원칙 (Obsidian 사용 시)
@@ -134,6 +168,7 @@ Obsidian 그래프 뷰에서 지식 네트워크 시각화
 - `wiki/` 폴더 파일은 **Obsidian에서 직접 편집하지 않는다**
   - Claude Code가 관리하는 영역이므로 직접 수정 시 컴파일 이력과 불일치 발생 가능
 - `raw/` 폴더는 자유롭게 편집 가능 (Web Clipper, 직접 작성 모두 OK)
+- `raw/Clippings/` **본문은 수정하지 않는다** — 승격 전 임시 보관 위치이며 캡처 원문 무결성을 지킨다. 고칠 것이 있으면 승격 후 `raw/` 에서 고친다
 - `output/` 결과물은 읽기용. 검증 후 wiki에 피드백은 Claude Code를 통해 진행
 
 ---

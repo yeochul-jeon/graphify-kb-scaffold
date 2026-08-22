@@ -46,7 +46,7 @@ Vector DB나 별도 서버 없이 **파일 시스템 + Claude의 직접 읽기**
 새로 clone한 경우 아래 순서대로 실행하면 누락 없이 시작할 수 있습니다.
 
 - [ ] **1. 저장소 클론 & 이동** — `git clone https://github.com/yeochul-jeon/graphify-kb.git && cd graphify-kb`
-- [ ] **2. Git hooks 활성화** — `bash scripts/setup-hooks.sh` (`wiki/` 직접 편집 보호)
+- [ ] **2. 온보딩 스크립트 실행** — `bash scripts/setup.sh` (git hooks 활성화 + graphify 설치를 한 번에 처리. 의존성 점검 결과가 요약으로 출력됩니다)
 - [ ] **3. Claude Code 실행 확인** — `claude --version` 으로 설치 확인 후 이 폴더에서 `claude` 실행
 - [ ] **4. 지식그래프 생성** — Claude Code 세션에서 `/graphify .` 실행
   > `graphify-out/`은 `.gitignore`되어 있어 첫 clone 시 비어 있습니다. 완료 후 `open graphify-out/graph.html`로 확인하세요.
@@ -63,8 +63,9 @@ Vector DB나 별도 서버 없이 **파일 시스템 + Claude의 직접 읽기**
 git clone https://github.com/yeochul-jeon/graphify-kb.git
 cd graphify-kb
 
-# Git hooks 활성화 (wiki/ 직접 편집 방지 경고)
-bash scripts/setup-hooks.sh
+# 온보딩 스크립트 실행 — git hooks 활성화(wiki/ 직접 편집 방지 경고) +
+# graphify 설치를 한 번에 처리. 재실행해도 안전합니다.
+bash scripts/setup.sh
 ```
 
 ### 디렉토리 구조 한눈에 보기
@@ -216,7 +217,7 @@ wiki와 raw 파일이 쌓이면 **전체 볼트를 그래프로 시각화**할 �
 /graphify .
 ```
 
-처음 실행 전에 `bash scripts/graphify-bootstrap.sh` 를 실행하면 `graphifyy` 설치 및 인터프리터 경로 설정이 자동으로 처리됩니다. (`Python 3.10+` 필요)
+Clone 직후 체크리스트의 `bash scripts/setup.sh`(2단계)를 이미 실행했다면 `graphifyy` 설치 및 인터프리터 경로 설정이 끝나 있습니다. 건너뛰었다면 처음 실행 전에 `bash scripts/graphify-bootstrap.sh` 를 실행해도 됩니다. (`Python 3.10+` 필요)
 
 **지원 입력**: Markdown · PDF · DOCX · XLSX · PNG/JPG/WebP · MP4/MOV · MP3/WAV · YouTube URL 등 광범위한 파일 형식을 처리합니다 (영상·오디오는 `[video]` extras 설치 필요).
 
@@ -327,7 +328,8 @@ Notion MCP가 연동되어 있으면 자동으로 내용을 가져옵니다.
 
 `wiki/` 파일이 staged된 경우 경고가 표시됩니다.
 의도한 수정이라면 `y`를 입력해 계속 진행하거나,
-Claude Code 커밋이라면 `ALLOW_WIKI_EDIT=1 git commit -m "..."` 으로 우회하세요.
+Claude Code 커밋이라면 `ALLOW_WIKI_EDIT=1 ALLOW_WIKI_EDIT_REASON="<사유>" git commit -m "..."` 으로 우회하세요.
+사유는 의무이며, 어떤 문구를 쓰는지는 [.claude/rules/wiki-concepts.md](../.claude/rules/wiki-concepts.md) §우회 사유의 두 갈래를 보세요 — 그래프 재빌드가 자동으로 만든 diff 인 경우가 따로 있습니다.
 
 ---
 
@@ -339,4 +341,4 @@ Claude Code 커밋이라면 `ALLOW_WIKI_EDIT=1 git commit -m "..."` 으로 우�
 - [docs/guide/graphify.md](guide/graphify.md) — 지식그래프 통합 상세 가이드
 - [docs/guide/troubleshooting.md](guide/troubleshooting.md) — 막힘 해결 (설치·실행 오류)
 - [docs/obsidian-setup.md](obsidian-setup.md) — Obsidian + Web Clipper 연동
-- [PLAN.md](../PLAN.md) — 시스템 설계 및 미래 로드맵
+- [log.md](../log.md) — 시스템 설계 결정 및 로드맵 (SSoT 허브)

@@ -52,14 +52,22 @@ SYNC_ITEMS=(
   "file:.claudeignore"
   "file:.graphifyignore"
   "file:CLAUDE.md"
+  # CLAUDE.md 는 본문 없이 `@AGENTS.md` 를 불러오기만 한다(2026-08-19 통합).
+  # 둘은 반드시 같이 전파해야 한다 — CLAUDE.md 만 보내면 대상 저장소가 없는 파일을 불러온다.
+  "file:AGENTS.md"
   "file:docs/architecture.md"
   "file:docs/tutorial.md"
   "file:docs/obsidian-setup.md"
   "file:scripts/kb.sh"
+  "file:scripts/setup.sh"
   "file:scripts/setup-hooks.sh"
   "file:scripts/graphify-bootstrap.sh"
   "file:scripts/graphify-py.sh"
   "file:scripts/sync-scaffold.sh"
+  # scripts/check-mirrors.py 는 **의도적으로 넣지 않는다** (2026-08-19).
+  #   그 검사는 `.agents/`·`.codex/` 아래 파일 전건이 매핑표에 청구되기를 요구하는데,
+  #   scaffold 저장소에는 그 디렉터리가 없어 선언된 미러 루트 부재로 무조건 실패한다.
+  #   전파하려면 「미러 자산 0건이면 통과」 분기가 필요하며 그것은 별건이다.
 )
 
 # ── 인자 파싱 ─────────────────────────────────────────────────────────────────

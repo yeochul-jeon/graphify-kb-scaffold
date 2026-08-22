@@ -1,20 +1,24 @@
-## graphify
+@AGENTS.md
 
-This project has a graphify knowledge graph at graphify-out/.
+<!--
+이 파일에는 규칙 본문을 쓰지 않는다. 본문의 단일 원본은 AGENTS.md 이며 위 한 줄로 불러온다.
 
-Rules:
-- 코드/아키텍처/개념 질의의 **첫 행동(FIRST ACTION)** 은 반드시 Bash 로 `scripts/graphify-py.sh -m graphify query "<질문>" --budget 1500` 실행이다 (좁은 추적은 `--dfs --budget 800`). 그 출력의 source_file 목록에서 핵심 파일만 골라 읽고 답한다.
-  - ⚠️ **파일을 읽는 행위(Read GRAPH_DIGEST.md / GRAPH_REPORT.md / wiki/*)는 query 명령 실행을 대체하지 않는다.** "다이제스트를 먼저 읽기"는 이 규칙 위반이다 — 반드시 query 명령(Bash)을 먼저 돌리고, 그 결과로 읽을 파일을 정한다.
-  - query 결과로 좁힌 뒤 전역 지형이 추가로 필요할 때만 `graphify-out/GRAPH_DIGEST.md`(top god nodes·hubs) → 필요 시 `GRAPH_REPORT.md` 순으로 본다.
-  - 보조 명령: `graphify path "A" "B"`, `explain "X"`, `affected "X"`. 상세·예외는 .claude/rules/graphify-pipeline.md 참조
-- Navigate wiki/index.md (tag preface at top) to find relevant concepts; read raw files only when wiki is insufficient
-- 루트 md (log.md, README.md) 는 질문이 해당 파일을 명시할 때만 읽는다; 일반 질의는 wiki/ 와 graphify-out/GRAPH_DIGEST.md 로 제한
-- After modifying code files in this session, run `bash scripts/graphify-build.sh` to keep the graph and GRAPH_DIGEST.md current (wrapper: update + DIGEST regen)
-- /graphify skill은 프로젝트 오버라이드(.claude/skills/graphify/SKILL.md)를 사용하며, python 호출은 scripts/graphify-py.sh 경유.
-- graphify 스킬은 이 프로젝트가 유일한 소스 오브 트루스다 (현재 upstream **0.8.39** 기반 포크). 수정은 `.claude/skills/graphify/SKILL.md` (core) 와 `.claude/skills/graphify/references/*.md` (8분할 lazy-load) 를 직접 편집.
-- ⚠️ **전역 `graphify install` 금지** — `--project` 없이 실행하면 `~/.claude/skills/graphify/` 와 `~/.claude/CLAUDE.md` 등록 블록을 만들어 이 포크를 가린다. 반드시 `graphify install --project`. 전역 PreToolUse 훅이 차단하지만 터미널 직접 실행은 못 막는다. 경위: docs/guide/graphify.md §전역 스코프 금지
-- scaffold 동기화: `bash scripts/sync-scaffold.sh [--apply]` 로 템플릿 자산을 graphify-kb-scaffold에 단방향 재전파. 가이드: docs/guide/scaffold-sync.md
+왜 이 구조인가
+- Claude Code 는 `AGENTS.md` 를 직접 읽지 않고 `CLAUDE.md` 만 읽는다. 공식 문서가
+  이 경우에 대해 "create a CLAUDE.md that imports it so both tools read the same
+  instructions without duplicating them" 을 지시한다.
+- Codex CLI 는 `AGENTS.md` 를 읽는다.
+- 따라서 이 한 줄이 두 도구가 같은 원본을 보게 하는 유일한 연결점이다.
 
-## AI Memory Boundaries
+규칙을 고칠 때
+- `AGENTS.md` 를 고친다. 여기에 본문을 다시 쓰면 두 벌이 되어 갈라진다.
+- Claude Code 에만 해당하는 지시가 생기면 이 주석 아래에 절을 만들어 추가한다.
 
-For memory-layer responsibilities, see `docs/guide/ai-memory-stack.md`. Keep this file focused on procedural rules.
+경위 (2026-08-19 통합)
+- 그 전에는 두 파일이 각각 20줄짜리 거의 같은 내용이었고, 실측 결과 14번째 줄이
+  이미 갈라져 있었다. 두 판이 각각 다른 실패 사례를 담고 있어 병합 시 둘 다 보존했다.
+- 전파 설정도 함께 고쳤다 — `scripts/sync-scaffold.sh` 의 목록에 `CLAUDE.md` 만 있고
+  `AGENTS.md` 가 없어서, 이 구조 그대로 전파하면 대상 저장소가 없는 파일을 불러오게 된다.
+
+이 주석은 컨텍스트에 실리지 않는다 (Claude Code 가 블록 주석을 제거한 뒤 주입한다).
+-->

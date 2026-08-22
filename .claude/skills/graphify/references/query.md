@@ -66,6 +66,16 @@ scripts/graphify-py.sh -m graphify save-result --question "ORIGINAL_QUESTION" --
 
 Replace `ORIGINAL_QUESTION` with the user's verbatim question, `ANSWER` with your full answer text (containing the expanded-token trace), `NODE1 NODE2` with the list of node labels you cited. This closes the feedback loop: the next `--update` will extract this Q&A as a node in the graph.
 
+**Work memory (self-improving loop).** Add an `--outcome` so future sessions learn from this one — append `--outcome useful|dead_end|corrected` to the `save-result` command (and `--correction "the right answer"` when correcting):
+
+- `useful` — the cited nodes answered the question well (they become *preferred sources*).
+- `dead_end` — the question/path led nowhere; don't re-derive it next time.
+- `corrected` — the saved answer was wrong; `--correction` records what was right.
+
+At the **start** of graph work, refresh and read the lessons: run `scripts/graphify-py.sh -m graphify reflect --if-stale` (cheap, deterministic, no LLM; `--if-stale` makes it a no-op when `LESSONS.md` is already newer than every input), then read `graphify-out/reflections/LESSONS.md`. It lists **preferred sources** (start there), **known dead ends** (skip them), and prior **corrections**. Running `reflect` yourself keeps the lessons current even without a git hook installed.
+
+⚠️ This is a graph-query work-memory loop (per-question outcomes on cited nodes), distinct from this project's `output/` commit pattern and the `#NN` wiki-quality ledger — those track wiki content review and lint findings, not query traversal results. Don't conflate the two.
+
 ---
 
 ## For /graphify path

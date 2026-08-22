@@ -3,7 +3,8 @@
 # wiki/ 파일이 staged된 경우 경고를 출력합니다.
 #
 # 우회 방법 (Claude Code 커밋 등 의도적 수정 시):
-#   ALLOW_WIKI_EDIT=1 git commit -m "..."
+#   ALLOW_WIKI_EDIT=1 ALLOW_WIKI_EDIT_REASON="<왜 우회하는가>" git commit -m "..."
+# 사유는 의무다 (.claude/rules/wiki-concepts.md §연동 의무).
 
 # 우회 플래그 확인
 if [ "${ALLOW_WIKI_EDIT}" = "1" ]; then
@@ -19,12 +20,12 @@ if [ -z "$WIKI_STAGED" ]; then
 fi
 
 if [ -n "$CI" ] || [ ! -t 0 ]; then
-  if [ "${ALLOW_WIKI_EDIT}" = "1" ]; then
-    echo "[wiki guard] bypassed in non-interactive mode: ${ALLOW_WIKI_EDIT_REASON:-no reason provided}"
-    exit 0
-  fi
   echo "[wiki guard] wiki/ files are staged in a non-interactive environment."
-  echo "Use reviewed /compile or /review output, or set ALLOW_WIKI_EDIT=1 with optional ALLOW_WIKI_EDIT_REASON."
+  echo "Use reviewed /compile or /review output."
+  echo "If the staged wiki/ diff is ONLY <!--m:...--> marker values in self-measuring docs"
+  echo "(frontmatter self_measuring: true — scripts/inject-self-metrics.py output), run:"
+  echo '  ALLOW_WIKI_EDIT=1 ALLOW_WIKI_EDIT_REASON="build auto-injection (inject-self-metrics)" git commit ...'
+  echo "Otherwise set ALLOW_WIKI_EDIT=1 with ALLOW_WIKI_EDIT_REASON explaining why."
   exit 1
 fi
 
@@ -40,7 +41,7 @@ echo "wiki/ 는 Claude 전용 영역입니다."
 echo "직접 편집한 경우 내용 정합성이 깨질 수 있습니다."
 echo ""
 echo "  • 의도한 수정이라면: 그대로 커밋하세요 (Enter 입력)"
-echo "  • Claude Code 커밋이라면: ALLOW_WIKI_EDIT=1 git commit ..."
+echo "  • Claude Code 커밋이라면: ALLOW_WIKI_EDIT=1 ALLOW_WIKI_EDIT_REASON=\"<사유>\" git commit ..."
 echo "  • 취소하려면: Ctrl+C"
 echo ""
 

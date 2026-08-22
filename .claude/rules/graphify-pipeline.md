@@ -47,7 +47,7 @@ bash scripts/graphify-build.sh           # 증분 코드 재추출 + DIGEST 재�
 bash scripts/graphify-build.sh --cluster-only  # 클러스터링 재실행 + DIGEST 재생성
 ```
 
-> **마지막 단계에서 `wiki/` 를 쓴다.** `inject-self-metrics.py` 가 자기 측정 문서(`self_measuring: true`, 현재 2건)의 `<!--m:이름-->값<!--/m-->` 마커에 현재 상태 수치를 주입한다. 따라서 빌드 후 `wiki/` diff 가 나올 수 있고, 그 커밋에는 `ALLOW_WIKI_EDIT=1` 이 필요하다. 값이 그대로면 파일을 쓰지 않으므로 평소에는 diff 가 0 이다. 규격은 `.claude/rules/wiki-concepts.md` §수치 주입.
+> **마지막 단계에서 `wiki/` 를 쓴다.** `inject-self-metrics.py` 가 자기 측정 문서(frontmatter `self_measuring: true`)의 `<!--m:이름-->값<!--/m-->` 마커에 현재 상태 수치를 주입한다. 따라서 빌드 후 `wiki/` diff 가 나올 수 있고, 그 커밋에는 `ALLOW_WIKI_EDIT=1` 과 사유가 필요하다 — 사유 문구와 판별 기준은 `.claude/rules/wiki-concepts.md` §우회 사유의 두 갈래. 값이 그대로면 파일을 쓰지 않으므로 평소에는 diff 가 0 이다. 규격은 같은 파일 §수치 주입.
 
 전체(LLM) 재빌드가 필요하면 `/graphify` 스킬 사용. 상세 플래그는 `.claude/skills/graphify/references/` 의 해당 파일 참조 — `update.md`(`--update`·`--cluster-only`), `query.md`(query·path·explain), `exports.md`(내보내기·MCP), `github-and-merge.md`(GitHub clone·교차 repo 병합), `add-watch.md`, `transcribe.md`, `hooks.md`, `extraction-spec.md`.
 

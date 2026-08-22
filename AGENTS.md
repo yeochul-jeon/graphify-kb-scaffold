@@ -1,0 +1,20 @@
+## graphify
+
+This project has a graphify knowledge graph at graphify-out/.
+
+Rules:
+- 코드/아키텍처/개념 질의의 **첫 행동(FIRST ACTION)** 은 반드시 Bash 로 `scripts/graphify-py.sh -m graphify query "<질문>" --budget 1500` 실행이다 (좁은 추적은 `--dfs --budget 800`). 그 출력의 source_file 목록에서 핵심 파일만 골라 읽고 답한다.
+  - ⚠️ **파일을 읽는 행위(Read GRAPH_DIGEST.md / GRAPH_REPORT.md / wiki/*)는 query 명령 실행을 대체하지 않는다.** "다이제스트를 먼저 읽기"는 이 규칙 위반이다 — 반드시 query 명령(Bash)을 먼저 돌리고, 그 결과로 읽을 파일을 정한다.
+  - query 결과로 좁힌 뒤 전역 지형이 추가로 필요할 때만 `graphify-out/GRAPH_DIGEST.md`(top god nodes·hubs) → 필요 시 `GRAPH_REPORT.md` 순으로 본다.
+  - 보조 명령: `graphify path "A" "B"`, `explain "X"`, `affected "X"`. 상세·예외는 .claude/rules/graphify-pipeline.md 참조
+- Navigate wiki/index.md (tag preface at top) to find relevant concepts; read raw files only when wiki is insufficient
+- 루트 md (log.md, README.md) 는 질문이 해당 파일을 명시할 때만 읽는다; 일반 질의는 wiki/ 와 graphify-out/GRAPH_DIGEST.md 로 제한
+- After modifying code files in this session, run `bash scripts/graphify-build.sh` to keep the graph and GRAPH_DIGEST.md current (wrapper: update + DIGEST regen)
+- /graphify skill은 프로젝트 오버라이드(.claude/skills/graphify/SKILL.md)를 사용하며, python 호출은 scripts/graphify-py.sh 경유.
+- graphify 스킬은 이 프로젝트가 유일한 소스 오브 트루스다 (현재 upstream **0.9.40** 기반 포크). 수정은 `.claude/skills/graphify/SKILL.md` (core) 와 `.claude/skills/graphify/references/*.md` (8분할 lazy-load) 를 직접 편집. 🔴 **고친 뒤 반드시 Codex 용 사본 `.agents/skills/graphify/` 에 그대로 복사한다** — `python3 scripts/check-mirrors.py` 가 통과해야 한다. 이 검사가 종전 `diff -rq` 를 **흡수**했고(병행 실행 불필요), `.claude/settings.json` ↔ `.codex/hooks.json` 등 다른 미러 자산까지 함께 본다 — 매핑표에 선언되지 않은 파일이 `.agents/`·`.codex/` 에 있어도 실패한다(원장 `#74`). 실패 사례 2건 — ⓐ 복사 없이 `.graphify_version` 만 올리면 사본이 거짓 버전을 들게 된다(2026-08-17 실제 발생·동기화) ⓑ 이 규칙이 한쪽 파일에만 있어서 0.9.40 재포크가 사본을 두고 갔다(2026-08-17 발견·동기화). ⓑ 는 이 파일이 단일 원본이 되면서 재발 조건이 사라졌다(2026-08-19).
+- ⚠️ **전역 `graphify install` 금지** — `--project` 없이 실행하면 `~/.claude/skills/graphify/` 와 `~/.claude/CLAUDE.md` 등록 블록을 만들어 이 포크를 가린다. 반드시 `graphify install --project`. 전역 PreToolUse 훅이 차단하지만 터미널 직접 실행은 못 막는다. 경위: docs/guide/graphify.md §전역 스코프 금지
+- scaffold 동기화: `bash scripts/sync-scaffold.sh [--apply]` 로 템플릿 자산을 graphify-kb-scaffold에 단방향 재전파. 가이드: docs/guide/scaffold-sync.md
+
+## AI Memory Boundaries
+
+For memory-layer responsibilities, see `docs/guide/ai-memory-stack.md`. Keep this file focused on procedural rules.

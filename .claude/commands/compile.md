@@ -14,6 +14,7 @@ LLM 컴파일러: `raw/` 자료를 읽고 `wiki/`를 점진적으로 구축합�
 - `$ARGUMENTS`가 있으면 해당 파일만
 - 없으면 `raw/` 에서 frontmatter의 `compiled: false`인 파일 전체 (Grep으로 탐색)
 - `raw/_templates/`, `raw/Clippings/`는 제외
+  - `raw/Clippings/` 는 **미처리 캡처 인박스**다 — `/ingest <경로>` 승격으로 `raw/` 에 올라온 뒤에 컴파일 대상이 된다 (`.claude/rules/raw-ingest.md` §Web Clipper 인박스)
 
 ### Step 2: 각 raw 파일 분석
 
@@ -94,10 +95,11 @@ review_due: null
 
 raw 파일 frontmatter에 `images` 필드가 있거나 본문에 이미지 참조(`![...]`)가 있는 경우:
 
-1. **이미지 복사**: `raw/attachments/[article-name]/` → `wiki/attachments/[concept-name]/`
-   - 해당 개념에서 참조하는 이미지만 선택적으로 복사
-2. **경로 변환**: wiki 파일에서의 상대 경로로 변환
-   - `![alt](attachments/concept-name/image.png)`
+🔴 **이미지를 복사하지 않는다.** 첨부의 단일 저장 위치는 `raw/attachments/<소스명>/` 이며 `wiki/attachments/` 는 쓰지 않는다 — 정본은 `.claude/rules/raw-ingest.md` §디렉터리 구조다.
+
+1. **상대경로 참조**: wiki 문서에서 원본 위치를 그대로 가리킨다
+   - `![alt](../../raw/attachments/<소스명>/img-01.png)` (`wiki/concepts/` 기준 2단계 상위)
+2. **선택적 참조**: 해당 개념에서 실제로 인용하는 이미지만 건다
 3. **이미지 없으면 건너뛰기**: 이미지 관련 처리 생략
 
 ### Step 4: wiki/index.md 업데이트
@@ -106,23 +108,15 @@ raw 파일 frontmatter에 `images` 필드가 있거나 본문에 이미지 참�
 - 최근 변경 이력 상단에 추가
 - 파일 상단 "총 개념 수" 카운터 갱신
 
-### Step 5: wiki/backlinks.md 업데이트 (증분)
+### Step 5: wiki/backlinks.md 재생성
 
-이번 컴파일에서 생성/수정한 wiki 파일만 처리:
+🔴 **손으로 고치지 않는다.** 스크립트를 호출한다:
 
-1. 기존 `wiki/backlinks.md` 읽기
-2. 변경된 파일에 해당하는 기존 backlink 항목 제거
-3. 변경된 파일의 `[[wikilink]]` 추출 후 backlink 항목 재삽입
-4. Grep으로 다른 wiki 파일에서 변경된 파일을 `[[참조]]`하는지 확인 후 반영
-
-형식:
-```
-## [[개념명]]
-참조하는 파일:
-- [[다른개념]] (이유/맥락)
+```bash
+scripts/graphify-py.sh scripts/rebuild-backlinks.py
 ```
 
-**정책**: 참조하는 파일이 없는 개념은 빈 블록으로 남기지 말고 항목 자체를 생략한다.
+결정론적 strict-inbound 역인덱싱으로 파일 전체를 다시 만든다 — 멱등이며 빈 블록을 남기지 않고 큐레이션 주석을 이월한다. 증분 편집(항목 제거 후 재삽입)은 드리프트를 만들어 금지됐다: `.claude/rules/wiki-concepts.md` §연동 의무 · `.claude/commands/lint.md` §7.
 
 ### Step 6: raw 파일 frontmatter 업데이트
 

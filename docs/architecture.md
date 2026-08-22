@@ -40,7 +40,7 @@ Vector DB나 별도 서버 없이 **파일 시스템 + LLM 직접 읽기**만으
 | `raw/` | 원본 자료 보관함 (URL, Notion, 직접 입력) | 사람이 `/ingest`로 추가 |
 | `wiki/` | 구조화된 지식 베이스 (개념·주제·역참조) | LLM 전용 (직접 편집 비권장) |
 | `output/` | Q&A 답변, 슬라이드, 차트 결과물 | LLM이 `/ask`·`/lint`로 생성 |
-| `raw/Clippings/` | Obsidian Web Clipper로 가져온 원본 (`.graphifyignore`로 스캔 제외) | 자동 수집 |
+| `raw/Clippings/` | Web Clipper 캡처 인박스 — 미처리 클립 (`.graphifyignore`로 스캔 제외). `/ingest` 승격 시 `raw/`로 이동 | 자동 수집 |
 
 **민감 자료 보호**: 민감 자료는 `raw/private/`, `raw/company/`, `raw/medical/`, `raw/finance/` 아래에 둡니다.
 이 경로는 git, Claude direct scan, Graphify indexing에서 제외합니다.
@@ -62,7 +62,7 @@ Vector DB나 별도 서버 없이 **파일 시스템 + LLM 직접 읽기**만으
 
 ### 3. graphify 그래프
 
-볼트 전체(raw, wiki, output, docs)를 스캔해 노드·엣지로 변환하는 **자동 생성 메타데이터**입니다. `raw/Clippings/`는 `.graphifyignore`로 스캔에서 제외됩니다.
+볼트 전체(raw, wiki, output, docs)를 스캔해 노드·엣지로 변환하는 **자동 생성 메타데이터**입니다. `raw/Clippings/`(미처리 캡처 인박스)는 `.graphifyignore`로 스캔에서 제외됩니다 — 승격으로 `raw/`에 올라온 뒤 그래프에 들어옵니다.
 
 | 산출물 | 경로 | 역할 |
 |---|---|---|
@@ -85,7 +85,7 @@ graphify-kb/
 │   ├── _templates/             ← 새 raw 파일 템플릿
 │   ├── attachments/            ← 이미지 등 첨부 파일
 │   ├── sessions/               ← /capture 결과 (대화 인사이트)
-│   └── Clippings/              ← Web Clipper 원본 (.graphifyignore 제외)
+│   └── Clippings/              ← Web Clipper 캡처 인박스 (미처리 — 승격 시 raw/ 로 이동)
 │
 ├── wiki/                       ← LLM 전용 지식 베이스 (직접 편집 비권장)
 │   ├── index.md                ← 탐색 허브 (61 개념, 6 주제)
@@ -128,7 +128,7 @@ graphify-kb/
 │   └── setup-hooks.sh          ← wiki/ 편집 경고 git hook 설치
 │
 ├── .claude/
-│   ├── commands/               ← 슬래시 커맨드 7개 (ingest/compile/ask/lint/capture/review/dev-log)
+│   ├── commands/               ← 슬래시 커맨드 8개 (ingest/compile/ask/lint/capture/review/dev-log/handoff)
 │   ├── rules/scaling.md        ← 규모별 탐색 전략
 │   └── settings.json           ← 허용 툴 + PreToolUse 훅
 │
@@ -137,9 +137,8 @@ graphify-kb/
 ├── .githooks/                  ← pre-commit hook 원본
 ├── .obsidian/                  ← Obsidian 볼트 설정
 ├── CLAUDE.md                   ← LLM 행동 지침 (graphify 규칙 포함)
-├── PLAN.md                     ← 프로젝트 설계·로드맵
 ├── README.md                   ← 프로젝트 개요 + 빠른 시작
-└── log.md                      ← 전체 요약 타임라인
+└── log.md                      ← 전체 요약 타임라인 + 설계 결정·로드맵 (SSoT)
 ```
 
 ---
@@ -177,7 +176,7 @@ graphify-kb/
   wiki/ (자동 수정)
 
 
-[볼트 전체 (raw + wiki + output + docs)]  ※ raw/Clippings/는 .graphifyignore 제외
+[볼트 전체 (raw + wiki + output + docs)]  ※ raw/Clippings/(미처리 인박스)는 .graphifyignore 제외
      │
      │  /graphify  (외부 graphify CLI)
      ▼
@@ -216,7 +215,7 @@ graphify-kb/
 | `.claude/commands/compile.md` | 전체 | raw → wiki 변환 로직 |
 | `.claude/commands/ask.md` | 전체 | wiki 기반 Q&A 로직 |
 | `graphify-out/manifest.json` | 전체 | mtime 기반 증분 재빌드 추적 |
-| `graphify-out/GRAPH_REPORT.md` | 전체 | 372 노드 · 644 엣지 · 22 커뮤니티 현황 |
+| `graphify-out/GRAPH_REPORT.md` | 전체 | 그래프 현황 (노드·엣지·커뮤니티 수). **수치는 여기에 옮겨 적지 않는다** — 재빌드마다 바뀌므로 그 파일을 직접 본다 |
 
 ---
 
@@ -227,7 +226,7 @@ graphify-kb/
 `wiki/`는 `/compile`이 관리하는 "검증된 지식 공간"입니다.
 사람이 직접 편집하면 다음 컴파일 때 내용이 덮어쓰여집니다.
 pre-commit hook이 `wiki/` 파일이 staged되면 경고를 표시합니다.
-비대화형/CI 환경에서는 `ALLOW_WIKI_EDIT=1`이 없으면 실패 종료(exit 1)하며, 필요하면 `ALLOW_WIKI_EDIT_REASON`으로 우회 사유를 남깁니다.
+비대화형/CI 환경에서는 `ALLOW_WIKI_EDIT=1`이 없으면 실패 종료(exit 1)하며, `ALLOW_WIKI_EDIT_REASON`으로 우회 사유를 함께 남겨야 합니다. 우회 사유는 **검토된 편집**과 **빌드 자동 주입**(`inject-self-metrics.py` 산출) 두 갈래이며, 판별 기준과 사유 문구는 [.claude/rules/wiki-concepts.md](../.claude/rules/wiki-concepts.md) §우회 사유의 두 갈래를 따릅니다.
 사람의 수정은 반드시 `raw/`를 경유해야 합니다.
 
 새로 만들거나 수정한 wiki 파일은 선택적으로 `claim_status`, `evidence_level`, `last_verified`, `review_due`를 기록할 수 있습니다. 값 정책은 [docs/guide/wiki-schema.md](guide/wiki-schema.md)를 따릅니다.
@@ -249,15 +248,9 @@ Claude가 질문에 답할 때 `wiki/` 전체를 읽지 않습니다.
 
 ## 확장성 (스케일링)
 
-`.claude/rules/scaling.md` 기준의 규모별 권장 전략:
+**정본은 [`.claude/rules/scaling.md`](../.claude/rules/scaling.md) 다.** 구간 정의와 구간별 전략을 여기에 복제하지 않는다 — 2026-08-15 검토에서 복제 표가 원본과 갈린 것이 실제로 발견됐다(대규모 대응을 원본은 미구현 명령으로, 사본은 "벡터 DB 도입 권장" 으로 적고 있었다).
 
-| 규모 | 아티클 수 | 전략 |
-|---|---|---|
-| **소규모** | ~100개 | `wiki/index.md` 먼저 읽기 → 관련 파일만 선택적 읽기 |
-| **중규모** | 100~500개 | 태그로 후보 좁히기 → 최대 10개 파일만 읽기. `topics/` 우선 탐색 |
-| **대규모** | 500개 이상 | `index.md` + `backlinks.md` + Grep 3단계만으로 답변 시도. 벡터 DB 도입 권장 |
-
-현재 이 저장소: **61 concepts · 6 topics** (2026-04-13 기준) — 소규모 단계.
+현재 구간은 그 문서의 §현재 구간 절이 단일 출처이며, 세는 단위는 `wiki/concepts + wiki/topics` 다.
 
 ---
 
@@ -268,4 +261,4 @@ Claude가 질문에 답할 때 `wiki/` 전체를 읽지 않습니다.
 - [docs/guide/graphify.md](guide/graphify.md) — 지식그래프 통합 상세 가이드
 - [docs/guide/wiki-schema.md](guide/wiki-schema.md) — wiki frontmatter 선택 스키마
 - [docs/guide/troubleshooting.md](guide/troubleshooting.md) — 막힘 해결
-- [PLAN.md](../PLAN.md) — 시스템 설계 결정 및 미래 로드맵
+- [log.md](../log.md) — 시스템 설계 결정 및 로드맵 (SSoT 허브)

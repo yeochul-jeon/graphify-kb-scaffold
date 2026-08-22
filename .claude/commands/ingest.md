@@ -16,7 +16,8 @@
 2. **GitHub URL** (`github.com/` 포함): 아래 GitHub 처리 규칙 적용
 3. **YouTube URL** (`youtube.com/watch`, `youtu.be/`, `youtube.com/shorts/` 포함): 아래 YouTube URL 처리 규칙 적용
 4. **일반 URL** (`http://` 또는 `https://` 시작, 위 항목에 해당 없음): 아래 일반 URL 처리 규칙 적용
-5. **로컬 파일 경로**: 해당 파일을 `raw/`로 복사
+5. **로컬 파일 경로**: `raw/Clippings/` 안의 파일(Web Clipper 캡처)이면 `raw/`로 **이동**(추적 중이면 `git mv`, 미추적이면 `mv`), 그 외 로컬 경로는 `raw/`로 **복사**. 어느 쪽이든 아래 §저장 처리(중복 검사 → kebab-case 파일명 → 이미지 핸들링)와 frontmatter 보강을 그대로 거친다
+   - 왜 이동인지·`verbatim` 판정·레거시 예외는 `.claude/rules/raw-ingest.md` §Web Clipper 인박스 가 단일 출처다. 🔴 `git mv` 를 무조건문으로 쓰지 마라 — 방금 캡처된 클립은 미추적이라 `fatal: not under version control` 로 실패한다
 6. **텍스트/없음**: 사용자에게 내용 직접 입력 요청
 
 ### GitHub URL 처리 규칙
@@ -102,7 +103,25 @@ github_files: [README.md, docs/index.md, ...]
 
 경로 대소문자와 위에 열거되지 않은 쿼리스트링은 **구분한다** — `?tl=ko`·`?hl=ko`·`?id=N` 처럼 실제로 다른 문서를 가리키는 경우가 있다.
 
-**2) 일치가 없으면** 그대로 저장 — 이하 절차 생략.
+**2) 일치가 없으면 — 🔴 여기서 끝내지 마라. `source_url` 이 URL 이 아니면 위 비교는 성립조차 하지 않았다** (2026-08-11 신설, 원장 #55)
+
+`source_url` 이 `직접 입력`·`manual (…)`·로컬 경로거나 **필드 자체가 없으면**, 같은 리터럴이 수십 건에 붙어 있어 **1) 의 «일치 없음» 은 무의미한 통과**다. 실제로 2026-08-10 에 같은 발표 2건이 이 경로로 들어왔고 **컴파일 단계에서 우연히** 발견됐다. 그 구간은 **제목 축**으로 본다:
+
+```bash
+# 저장 전에 돌리려면 임시 경로로 쓴 뒤 그 경로를 넘긴다 — 말뭉치 밖 경로도 읽는다.
+scripts/graphify-py.sh scripts/check-title-dup.py --new /tmp/<새파일>.md
+# 이미 raw/ 에 썼다면 그 경로를 그대로 넘긴다.
+scripts/graphify-py.sh scripts/check-title-dup.py --new raw/<새파일>.md
+```
+
+⚠️ **1) 은 「저장 전」 검사인데 이 검사기는 파일이 있어야 읽는다.** 둘 중 하나로 맞춘다 — **ⓐ 임시 경로에 먼저 쓰고 대조**하거나, **ⓑ `raw/` 에 쓴 뒤 대조하고 3) 의 «중단» 판정이 나면 그 파일을 지운다.** ⓑ 를 택했으면 **지웠다는 사실까지 보고**한다. 어느 쪽이든 **`title` frontmatter 가 이미 채워져 있어야** 대조가 성립한다.
+
+- 후보가 나오면 **3) 의 3분기를 그대로 적용**한다 — 새 분기·새 필드를 만들지 않는다.
+- 🔴 **이 검사기는 판정하지 않는다. 순위만 매긴다.** 실측상 진양성 최저 **0.444** 가 위양성 최고 **0.545** 보다 낮아 **어떤 문턱도 두 집단을 가르지 못한다.** 점수가 높다고 중복이 아니고 낮다고 아닌 것도 아니다 — **판정은 본문 대조로만** 내린다(아래 §병합·삭제 판정 규율과 같다).
+- ⚠️ **종료 코드 `2` 는 실패가 아니라 «후보 있음»** 이다. 하드 블록이 아니므로 이것으로 인제스트를 중단시키지 않는다.
+- ⚠️ **`author` 가 같아도 다른 자료일 수 있다** — `Grace (InfoGrab)` 5건이 실례다. 저자는 **순위 가중치**이지 판별자가 아니다.
+
+**2') 위 둘 다 후보가 없으면** 그대로 저장 — 이하 절차 생략.
 
 **3) 일치가 있으면 저장을 멈추고 보고한다.** 기존 파일의 `duplicate_url_verdict` 를 먼저 확인:
 
@@ -141,21 +160,13 @@ github_files: [README.md, docs/index.md, ...]
 
 ### YAML Frontmatter 추가
 
-모든 raw 파일에 다음 frontmatter를 반드시 추가:
+🔴 **먼저 `raw/_templates/raw-template.md` 를 Read 로 열어라. 그 파일의 frontmatter 를 복사해 채운다.**
 
-```yaml
----
-title: [추출한 제목]
-source_url: [원본 URL 또는 "직접 입력"]
-ingested_date: [오늘 날짜 YYYY-MM-DD]
-compiled: false
-compiled_date: null
-tags: []
-images: []  # 이미지 있으면 상대 경로 목록 (예: [attachments/article-name/img-01.png])
-verbatim: [true | false]        # 필수 — 아래 §수집 시점 판정 참조. 기본값을 두지 않는다
-verbatim_checked: [오늘 날짜]    # 필수 — verbatim 을 기재한 날
----
-```
+**여기에 스키마를 다시 적지 않는다.** 사본을 두면 낡기 때문이다 — 2026-08-16 실측에서 이 문서의 사본과 정본(`.claude/rules/raw-ingest.md`)이 실제로 갈려 있었고, 여기 붙어 있던 *"정본은 규칙 파일이다"* 라는 안내문은 **컨텍스트에 전달됐는데도 규칙 파일로 이어지지 않았다**(근거: `docs/plan/plans/2026-08-15-system-review.md` §9-a).
+
+**템플릿을 여는 것이 안내문보다 확실한 이유**는 그 파일이 `raw/` 아래에 있다는 데 있다. `.claude/rules/raw-ingest.md` 는 `paths: raw/**` 스코프라 **그 파일을 여는 순간 규칙 전문이 함께 주입된다** — 같은 실측에서 실제로 작동한 유일한 전달 경로다. 안내문은 읽고 넘어갈 수 있지만, 템플릿은 열지 않으면 채울 내용이 없다.
+
+기억으로 필드를 채우지 마라. 템플릿에 없는 필드가 필요해 보이면 그때 `.claude/rules/raw-ingest.md` 를 보고, 그래도 없으면 **새로 만들지 말고 사람에게 묻는다**(§새 필드 금지).
 
 #### `verbatim` — 수집 시점에 판정한다 (2026-08-09 신설, 원장 #50)
 

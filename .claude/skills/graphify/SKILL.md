@@ -105,7 +105,7 @@ Omit any category with 0 files from the summary.
 
 Then act on it:
 - If `total_files` is 0: stop with "No supported files found in [path]."
-- If `skipped_sensitive` is non-empty: mention file count skipped, not the file names.
+- If `skipped_sensitive` is non-empty: report the count and list the skipped file names, so a wrongly-flagged source or doc is visible and can be renamed or moved.
 - If `total_words` > 2,000,000 OR `total_files` > 500: show the warning. Then compute the top 5 first-level subdirectories by file count:
   - Read `scan_root` from the detect JSON (always an absolute path to the resolved INPUT_PATH).
   - Concatenate all file lists across all types (`code`, `document`, `paper`, `image`, `video`).
@@ -176,6 +176,8 @@ Before dispatching subagents, print a timing estimate:
 
 **Step B0 - Check extraction cache first**
 
+SPEC_PATH below is the **absolute** path of the `references/extraction-spec.md` that ships beside this SKILL.md — the same file Step B2 loads and hands to every subagent. It is the extraction prompt, so cache entries are attributed to it: when a graphify upgrade changes the prompt, entries produced by the old one are re-extracted instead of replayed, and unchanged prompts keep their entries. Substitute the real path in both Step B0 and Step B3 — pass the same one to each, and do not drop the argument.
+
 Before dispatching any subagents, check which files already have cached extraction results:
 
 ```bash
@@ -187,7 +189,7 @@ from pathlib import Path
 detect = json.loads(Path('graphify-out/.graphify_detect.json').read_text(encoding=\"utf-8\"))
 all_files = [f for files in detect['files'].values() for f in files]
 
-cached_nodes, cached_edges, cached_hyperedges, uncached = check_semantic_cache(all_files)
+cached_nodes, cached_edges, cached_hyperedges, uncached = check_semantic_cache(all_files, root='INPUT_PATH', prompt_file='SPEC_PATH')
 
 if cached_nodes or cached_edges or cached_hyperedges:
     Path('graphify-out/.graphify_cached.json').write_text(json.dumps({'nodes': cached_nodes, 'edges': cached_edges, 'hyperedges': cached_hyperedges}, ensure_ascii=False), encoding=\"utf-8\")
@@ -266,7 +268,7 @@ print(f'Merged {len(chunks)} chunks: {total_in:,} in / {total_out:,} out tokens'
 "
 ```
 
-Save new results to cache:
+Save new results to cache. Pass the same SPEC_PATH as Step B0 — it stamps each entry with the prompt that produced it, and a write under a different prompt than the read lands where the next run won't look:
 ```bash
 scripts/graphify-py.sh -c "
 import json
@@ -274,7 +276,8 @@ from graphify.cache import save_semantic_cache
 from pathlib import Path
 
 new = json.loads(Path('graphify-out/.graphify_semantic_new.json').read_text(encoding=\"utf-8\")) if Path('graphify-out/.graphify_semantic_new.json').exists() else {'nodes':[],'edges':[],'hyperedges':[]}
-saved = save_semantic_cache(new.get('nodes', []), new.get('edges', []), new.get('hyperedges', []))
+uncached = [line for line in Path('graphify-out/.graphify_uncached.txt').read_text(encoding=\"utf-8\").splitlines() if line]
+saved = save_semantic_cache(new.get('nodes', []), new.get('edges', []), new.get('hyperedges', []), root='INPUT_PATH', allowed_source_files=uncached, prompt_file='SPEC_PATH')
 print(f'Cached {saved} files')
 "
 ```
@@ -363,7 +366,15 @@ from pathlib import Path
 extraction = json.loads(Path('graphify-out/.graphify_extract.json').read_text(encoding=\"utf-8\"))
 detection  = json.loads(Path('graphify-out/.graphify_detect.json').read_text(encoding=\"utf-8\"))
 
-G = build_from_json(extraction)
+# root= mirrors the --update runbook: relativize source_file to the same base
+# so the full build and incremental --update never drift apart on re-extract.
+G = build_from_json(extraction, root='INPUT_PATH')
+# Guard BEFORE any write: an empty extraction must not clobber a good graph.json /
+# GRAPH_REPORT.md / analysis sidecar.
+if G.number_of_nodes() == 0:
+    print('ERROR: Graph is empty - extraction produced no nodes.')
+    print('Possible causes: all files were skipped, binary-only corpus, or extraction failed.')
+    raise SystemExit(1)
 communities = cluster(G)
 cohesion = score_all(G, communities)
 tokens = {'input': extraction.get('input_tokens', 0), 'output': extraction.get('output_tokens', 0)}
@@ -373,9 +384,18 @@ labels = {cid: 'Community ' + str(cid) for cid in communities}
 # Placeholder questions - regenerated with real labels in Step 5
 questions = suggest_questions(G, communities, labels)
 
+# Export FIRST and honor the shrink-guard: to_json returns False (writing nothing)
+# when the new graph is smaller than the existing graph.json. Only write
+# GRAPH_REPORT.md + the analysis sidecar when the graph was actually written, so
+# they never describe a graph that graph.json doesn't contain.
+wrote = to_json(G, communities, 'graphify-out/graph.json')
+if not wrote:
+    print('ERROR: refused to shrink graphify-out/graph.json (existing graph has more nodes).')
+    print('If this shrink is intentional (you deleted files), re-run a full build with --force.')
+    raise SystemExit(1)
+
 report = generate(G, communities, cohesion, labels, gods, surprises, detection, tokens, '.', suggested_questions=questions)
 Path('graphify-out/GRAPH_REPORT.md').write_text(report, encoding=\"utf-8\")
-to_json(G, communities, 'graphify-out/graph.json')
 
 analysis = {
     'communities': {str(k): v for k, v in communities.items()},
@@ -385,17 +405,39 @@ analysis = {
     'questions': questions,
 }
 Path('graphify-out/.graphify_analysis.json').write_text(json.dumps(analysis, indent=2, ensure_ascii=False), encoding=\"utf-8\")
-if G.number_of_nodes() == 0:
-    print('ERROR: Graph is empty - extraction produced no nodes.')
-    print('Possible causes: all files were skipped, binary-only corpus, or extraction failed.')
-    raise SystemExit(1)
 print(f'Graph: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges, {len(communities)} communities')
 "
 ```
 
-If this step prints `ERROR: Graph is empty`, stop and tell the user what happened - do not proceed to labeling or visualization.
+If this step prints `ERROR: Graph is empty` or the shrink-guard error, stop and tell the user what happened - do not proceed to labeling or visualization.
 
 Replace INPUT_PATH with the actual path.
+
+### Step 4.5 - Graph health check (read-only integrity gate)
+
+A non-destructive diagnostic on the extraction, before labeling. It surfaces edge collapse, dangling/missing endpoints, and self-loops — the silent-corruption modes of incremental updates and AST/LLM id mismatches. Read-only; never aborts.
+
+```bash
+scripts/graphify-py.sh -c "
+import json
+from pathlib import Path
+from graphify.diagnostics import diagnose_extraction, format_diagnostic_report
+
+extraction = json.loads(Path('graphify-out/.graphify_extract.json').read_text(encoding=\"utf-8\"))
+summary = diagnose_extraction(extraction, directed=False, root='INPUT_PATH')
+print(format_diagnostic_report(summary))
+flags = [f'{summary[k]} {label}' for k, label in (
+    ('dangling_endpoint_edges', 'dangling-endpoint edges'),
+    ('missing_endpoint_edges', 'missing-endpoint edges'),
+    ('self_loop_edges', 'self-loop edges'),
+    ('directed_same_endpoint_collapsed_edges', 'collapsed (directed) edges'),
+    ('undirected_same_endpoint_collapsed_edges', 'collapsed (undirected) edges'),
+) if summary.get(k, 0)]
+print('GRAPH HEALTH WARNING: ' + '; '.join(flags) + ' - graph may be incomplete/corrupt.' if flags else 'Graph health: OK (no dangling/missing/collapsed edges).')
+"
+```
+
+Replace `directed=False` with `directed=True` if `--directed` was given (same as Step 4), and `INPUT_PATH` with the actual path. If a `GRAPH HEALTH WARNING` prints, surface it in the final summary (do not abort — the graph is still usable, but the integrity issue must be visible).
 
 ### Step 5 - Label communities
 
@@ -410,13 +452,15 @@ from graphify.build import build_from_json
 from graphify.cluster import score_all
 from graphify.analyze import god_nodes, surprising_connections, suggest_questions
 from graphify.report import generate
+from graphify.export import to_json
 from pathlib import Path
 
 extraction = json.loads(Path('graphify-out/.graphify_extract.json').read_text(encoding=\"utf-8\"))
 detection  = json.loads(Path('graphify-out/.graphify_detect.json').read_text(encoding=\"utf-8\"))
 analysis   = json.loads(Path('graphify-out/.graphify_analysis.json').read_text(encoding=\"utf-8\"))
 
-G = build_from_json(extraction)
+# root= as in Step 4 / the --update runbook — same base for node-key parity.
+G = build_from_json(extraction, root='INPUT_PATH')
 communities = {int(k): v for k, v in analysis['communities'].items()}
 cohesion = {int(k): v for k, v in analysis['cohesion'].items()}
 tokens = {'input': extraction.get('input_tokens', 0), 'output': extraction.get('output_tokens', 0)}
@@ -430,6 +474,17 @@ questions = suggest_questions(G, communities, labels)
 report = generate(G, communities, cohesion, labels, analysis['gods'], analysis['surprises'], detection, tokens, '.', suggested_questions=questions)
 Path('graphify-out/GRAPH_REPORT.md').write_text(report, encoding=\"utf-8\")
 Path('graphify-out/.graphify_labels.json').write_text(json.dumps({str(k): v for k, v in labels.items()}, ensure_ascii=False), encoding=\"utf-8\")
+
+# Re-export so graph.json nodes carry the curated community_name — otherwise
+# graph.json/graph.html keep numeric community IDs forever even though
+# GRAPH_REPORT.md shows the real names. Same extraction as Step 4, so the
+# shrink-guard passes on node count; if it still refuses, surface the guard
+# message - do not force past it.
+wrote = to_json(G, communities, 'graphify-out/graph.json', community_labels=labels)
+if not wrote:
+    print('ERROR: refused to shrink graphify-out/graph.json (existing graph has more nodes).')
+    print('If this shrink is intentional (you deleted files), re-run a full build with --force.')
+    raise SystemExit(1)
 print('Report updated with community labels')
 "
 ```
@@ -471,15 +526,39 @@ import json
 from pathlib import Path
 from datetime import datetime, timezone
 from graphify.detect import save_manifest
+from graphify.cli import _stamped_manifest_files
 
 # Save manifest for --update
 detect = json.loads(Path('graphify-out/.graphify_detect.json').read_text(encoding=\"utf-8\"))
+extract = json.loads(Path('graphify-out/.graphify_extract.json').read_text(encoding=\"utf-8\"))
 # In --update mode, 'all_files' carries the full corpus; 'files' is the changed
 # subset. Full-rebuild mode populates only 'files', so the fallback handles that.
-save_manifest(detect.get('all_files') or detect['files'])
+_corpus = detect.get('all_files') or detect['files']
+# root= relativizes manifest keys to the scan root, so the on-disk manifest is
+# portable across clones/machines and a later --update matches cached files
+# instead of missing every one.
+#
+# Only stamp semantic files (docs/papers/images) that ACTUALLY produced output:
+# a detected file whose chunk failed or was omitted must stay unstamped so the
+# next --update re-queues it, otherwise it is marked done and its content is lost
+# forever. This mirrors the library extract path (cli._stamped_manifest_files);
+# do not stamp the raw corpus. Code files are always stamped (AST is
+# deterministic); only semantic types are gated on output.
+_manifest_files = _stamped_manifest_files(_corpus, extract, Path('INPUT_PATH'))
+# Files dispatched this run (the changed subset) but NOT stamped above still carry
+# a stale semantic_hash from a prior run; clear it so detect_incremental re-queues
+# them instead of reading them as unchanged.
+_sem_types = ('document', 'paper', 'image')
+_dispatched = {f for t, fl in detect['files'].items() if t in _sem_types for f in fl}
+_stamped = {f for fl in _manifest_files.values() for f in fl}
+_cleared = _dispatched - _stamped
+# scan_corpus = the RAW full corpus (not the stamp-filtered subset) so in-root
+# files newly excluded since last run are dropped rather than masquerading as
+# deletions; untouched files' prior rows are still preserved.
+_scan = {f for fl in _corpus.values() for f in fl}
+save_manifest(_manifest_files, root='INPUT_PATH', scan_corpus=_scan, clear_semantic=_cleared or None)
 
 # Update cumulative cost tracker
-extract = json.loads(Path('graphify-out/.graphify_extract.json').read_text(encoding=\"utf-8\"))
 input_tok = extract.get('input_tokens', 0)
 output_tok = extract.get('output_tokens', 0)
 
@@ -506,6 +585,8 @@ rm -f graphify-out/.graphify_detect.json graphify-out/.graphify_extract.json gra
 find graphify-out -maxdepth 1 -name '.graphify_chunk_*.json' -delete 2>/dev/null
 rm -f graphify-out/.needs_update 2>/dev/null || true
 ```
+
+Replace `INPUT_PATH` with the actual path (same value used in Steps 4–5) so the manifest is relativized to the scan root.
 
 Tell the user (omit the obsidian line unless --obsidian was given):
 ```

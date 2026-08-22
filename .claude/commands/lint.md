@@ -50,13 +50,26 @@ wiki 품질 자가 점검. 깨진 링크, 고아 파일, 중복, 오래된 콘�
 
 ### 3. 오래된 콘텐츠 탐지
 
-- frontmatter의 `updated` 날짜가 30일 이상 된 파일
+- frontmatter의 `updated` 날짜가 `wiki_scan.STALE_DAYS`(**30일**) 이상 된 파일
+- ✅ **`updated` 추출은 `scripts/wiki_scan.py` 의 `updated_date(text)` 를 `import` 한다 — 직접 짜지 말 것** (2026-08-19 신설, 원장 #64-b)
+  - 🔴 **줄 전체를 파싱하면 안 된다.** `updated: 2026-04-10 (설명)` 처럼 날짜 뒤에 괄호가 붙은 실사용이 있어 ISO 검사에 걸려 **그 파일이 통째로 스킵되고 수치가 낮게 나온다.** 실측(2026-08-19): 정본 **167** vs 전체라인 파서 **164** — 차이 3건은 `error-message-management`·`spring-messagesource`·`stripe-api-errors` 로 특정된다. 36회차가 이 함정을 밟아 168 을 **165** 로 보고했고 🔴 **그 −3 이 *"컷 이동의 순효과"* 라는 개선으로 해석돼 실렸다**
+  - ⚠️ **경과일수 계산은 함수에 없다** — 관측일 의존이라 호출자가 자기 기준일로 계산한다(`is_fast_moving` 과 같은 판단). 러너 `scripts/lint-metrics.py` 가 그 일을 하며 **쓴 컷 날짜를 출력에 찍는다**
+  - ⚠️ **임계값 30일을 `#12` 의 90일과 섞지 말 것** — §재측정 규율 2항이 기록한 실제 오판이다(점검 #12 참조)
+- 명령: `python3 scripts/lint-metrics.py` · 회귀 시험 `python3 scripts/test_lint_metrics.py`
 - 보고서에 목록 표시, 사람이 검토 요청
+- ⚠️ 증감은 `−N(조치) / +M(경계 통과)` **두 값**으로 적는다([[suggested-investigations#48]]). **러너는 두 값을 내지 않는다** — 그 분해는 이전 회차 트리의 집합이 필요하므로 회차 세션이 조합한다
 
 ### 4. 중복 개념 탐지
 
-- 파일명이 유사한 파일 쌍 탐지 (편집 거리 기준)
-- 태그가 완전히 동일한 파일 쌍
+- 파일명 유사도 = `wiki_scan.name_similarity(base1, base2) >= wiki_scan.DUP_NAME_THRESHOLD`(**0.82**)
+- 태그가 완전히 동일한 파일 쌍 = `wiki_scan.is_dup_tags(tags1, tags2)`
+- ✅ **둘 다 `scripts/wiki_scan.py` 를 `import` 한다 — 직접 짜지 말 것** (2026-08-19 신설, 원장 #64-b)
+  - 🔴 **이 항목의 문면이 종전에 *"편집 거리 기준"* 이었고, 그것이 정본과 다른 측도였다.** 33·35·36회차가 **0** 을 보고한 것은 부주의가 아니라 **이 지시서를 성실히 따른 결과**다. 실측: 편집 거리 ≤3 은 이 코퍼스의 정본 5쌍을 **전부** 놓친다(Levenshtein 6·5·4·9·6). 그 사이 「중복 개념 0」이 두 회차 연속 무결의 근거로 실렸다
+  - 🔴 **임계값은 고정이며 조정 손잡이가 아니다** — 실측 0.81 → **6쌍** · 0.82 → **5쌍** · 0.83 → **4쌍**
+  - ⚠️ **`scripts/check-title-dup.py` 의 `normalize()` + 하한 0.40 을 가져오지 말 것** — 그쪽은 `raw/` **제목**용 다른 측도다(원장 #24)
+  - ⚠️ **빈 태그셋끼리를 일치로 세지 않는다** — 가드가 없으면 태그 없는 파일이 전부 서로 짝이 된다
+- 두 축은 **OR 로 각각 보고**한다 — 14회차에 태그셋 일치 쌍이 처음 나왔을 때 파일명 유사도는 0.82 미만이었다
+- 명령: `python3 scripts/lint-metrics.py` · 회귀 시험 `python3 scripts/test_lint_metrics.py`
 - 보고서에 표시, 병합 여부는 사람이 판단
 
 ### 5. 출처 누락 탐지
@@ -72,11 +85,34 @@ wiki 품질 자가 점검. 깨진 링크, 고아 파일, 중복, 오래된 콘�
 - 이 항목이 잡히면 결함으로 올리기 전에 **먼저 표기 오판인지 확인할 것** — 위 두 표기를 모두 파싱했는가.
 - 보고서에 목록 표시
 
+### 5b. fm `sources` ↔ §출처 절 정합 (2026-08-10 신설, 원장 #57)
+
+```bash
+scripts/graphify-py.sh scripts/check-source-section.py --check --verbose
+```
+
+- **정의는 `.claude/rules/wiki-concepts.md` §출처 표기의 두 자리 가 단일 출처다** — fm `sources` 가 정본이고 §출처 절은 **부분집합**이다. 위반은 **③절 ⊃ fm** 하나뿐이다.
+- ⚠️ **②fm ⊃ 절(fm 에만 있음)을 위반으로 세지 말 것** — 외부 URL·`output/` 인용은 §출처 절에 쓰지 않는 관행이 있고, 2026-08-10 실측에서 **29건**이 이 형태다. 동일 집합으로 재면 31건이 전부 위반으로 잡혀 정당한 것을 가릴 수 없다.
+- **`--fix` 불가**: 조치는 **fm 에 추가**이며 어느 출처를 넣을지는 본문을 읽어야 안다. §출처 절에서 지우는 방향은 근거를 없애므로 금지.
+
 ### 6. index.md 동기화 점검
 
 - `wiki/concepts/`와 `wiki/topics/`의 실제 파일 vs `wiki/index.md` 테이블 비교
 - index에 없는 파일, 파일이 없는데 index에 있는 항목 탐지
+- 🔴 **등재 링크 추출은 `scripts/wiki_scan.py` 의 `index_links(text)` 를 `import` 한다 — 직접 짜지 말 것**(원장 #60). `index.md` 는 본문과 **표기가 다르다**: 본문은 `[[슬러그]]` 인데 목록 표는 `[표시](concepts/x.md)` **마크다운 링크**다. 본문용 정규식을 그대로 쓰면 **306 파일 전건이 미등재로 잡힌다** — 30회차가 정확히 그렇게 **305건을 오보**했고(실제 0) 다섯 오탐 중 **경고 문서가 없던 유일한 항목**이었다. 함수가 못 보는 범위는 그 docstring 에 있다.
 - **`--fix` 시**: `wiki/index.md` 자동 재생성
+
+### 6c. index.md 날짜 열 대조 (31회차 신설, 원장 #61 — 사람 결정 ③)
+
+- `wiki/index.md` 목록 표의 **최종 업데이트 열** vs 각 파일 frontmatter `updated` 대조. 추출은 `scripts/wiki_scan.py` 의 **`index_rows(text)`**(`index_links` 의 상위 함수). **2026-08-11 이후 정상값은 ⓐ 전건 · ⓑ 0 · ⓒ 0 이다** — 아래 참조.
+- ✅ **2026-08-11 사람 결정 ① 채택 — 이 열은 이제 파생값이며 빌드가 주입한다.** 독자가 **«사람 + AI» 로 확인**돼 ②(열 삭제)는 배제됐다. 주입기는 `scripts/sync-index-dates.py` 이고 `graphify-build.sh` 가 `rebuild-backlinks.py` 직후에 돌린다.
+  - 🔴 **따라서 이 점검은 「보고」에서 「가드」로 성격이 바뀌었다.** 정상값은 **ⓐ 전건 · ⓑ 0 · ⓒ 0** 이며, **0 이 아니면 빌드를 안 돌린 것**이다. `python3 scripts/sync-index-dates.py --check` (어긋나면 exit 1) 하나로 끝난다.
+  - ⚠️ **`--fix` 는 여전히 만들지 않는다** — 고치는 주체가 `/lint` 가 아니라 **빌드**다. `/lint` 가 따로 고치면 두 경로가 생겨 어느 쪽이 정본인지 다시 흐려진다.
+  - 🔴 **방향은 한쪽뿐이다.** `index.md` 만 쓰고 `concepts/`·`topics/` 의 `updated` 는 **건드리지 않는다** — 반대로 밀면 본문 무변경인데 `updated` 가 올라 **#40 경로**를 그대로 밟는다(분류 작업이 자기가 겨냥한 문제를 지표에서 숨긴다).
+  - **첫 동기화 실적 (2026-08-11)**: **84건** = 치환 80 + **빈 칸 채움 4**. 빈 칸 4건은 표 헤더가 4열인데 **셀이 아예 없던 3열 행**이었다. 동기화 후 셀 수 분포가 **4열 309행으로 균일**해졌고 `index_rows()` 의 `None` 이 **0** 이 됐다.
+- 🔴 **부분 동기화 금지는 유지된다.** 일부만 고치면 나머지가 남아 회차 간 수치가 원인 불명으로 움직인다. **전량이거나 0이거나**이며, ① 채택으로 전량이 **빌드의 일**이 됐다.
+- **세 상태를 합치지 않는다** — ⓐ 일치 ⓑ 불일치 ⓒ **날짜 열이 빔**(`None`). ⓒ 를 ⓑ 로 세면 조치 대상이 부풀려진다.
+- ⚠️ **분모를 함께 적는다.** 30회차는 **76/302**, 31회차 정의로는 **76/306**(= 226 일치 + 76 불일치 + **4 빈 칸**)이다. **분자가 같고 분모가 다르며 둘 다 맞다** — 302 는 *날짜가 적힌 행*, 306 은 *등재 행 전체*가 분모다(재측정 규율 3).
 
 ### 6b. 태그 프리페이스 동기화 점검
 
@@ -84,6 +120,8 @@ wiki 품질 자가 점검. 깨진 링크, 고아 파일, 중복, 오래된 콘�
   - 각 행: `태그 | [[concept-id]] 목록`
 - ⚠️ **정방향 검사는 2026-07-27 폐기됐다. 다시 도입하지 말 것.** 프리페이스는 frontmatter `tags:` 의 파생물이 **아니라 사람이 큐레이션한 탐색 인덱스**다(`.claude/rules/wiki-concepts.md` 태그 규칙 절). 파일 `tags:` 에 없는 태그 행에 개념이 등재되는 것은 **정상**이며 — 별칭 행(`#sqlite-vec | sqlite-vec`)과 주제 묶기(`#harness-engineering | test-as-constraint`)가 그 예다 — 이를 불일치로 집계하면 58건의 오탐이 발생한다.
 - **커버리지 검사**: `wiki/concepts/*.md`·`topics/*.md` 의 `tags:` 중 **3회 이상** 쓰이는데 프리페이스에 **행 자체가 없는** 태그를 탐지해 WARN. 3회 미만은 보고하지 않는다.
+  - ✅ **태그 추출은 `scripts/wiki_scan.py` 의 `tags(text)` 를 `import` 한다 — 직접 짜지 말 것** (2026-08-11 신설, 원장 #64). `[a-z0-9-]+`·`[\w-]+` 같은 **토큰 정규식으로 훑으면 `.` 에서 쪼개져** `CLAUDE.md` → `CLAUDE`+`md` 가 되고, 실사용에 `CLAUDE.md` 2건·`AGENTS.md` 2건·`SKILL.md` 1건이 있어 **존재하지 않는 태그 `md` 가 5회로 집계돼 위반 1건**이 된다. 🔴 **17·26·32회차에 세 번 났다.** 26회차가 `weather.md` §측정 정의에 증상·원인·파일명까지 실명으로 적었는데도 32회차가 또 틀렸다 — **산문이 세 번 실패했으므로 조치가 함수다.**
+  - 회귀 시험: `python3 scripts/test_wiki_scan_tags.py` (파손본 검증 포함 — naive 파서가 실제로 깨지는지 먼저 확인한다).
   - ⚠️ **신규 파일은 「부착 후 카운트」로 잰다** (원장 #32-(a)). 신규 개념이 **기존 태그를 2회 → 3회로 밀어 올리는 경로**가 실재하며, 신규 태그만 세면 그 경로를 놓친다.
 - **중복 행 검사** (2026-08-07 신설, 원장 #26 조치안 ②): 같은 태그가 **행 두 개 이상**을 갖는지 탐지해 WARN. 커버리지 검사는 *"행이 **없는** 태그"* 만 보므로 **행이 둘이면 통과한다** — 18회차에 중복 5종(`#kiro`·`#mcp`·`#multi-agent`·`#plugin`·`#vibe-coding`)이 그렇게 빠져나갔고, 한 행만 본 독자는 나머지 개념을 놓친다. **커버리지와 달리 완전 기계 판정이 가능하다.**
   - 행 추출은 `^\|\s*` + 백틱으로 감싼 `#태그` 로 한다. 프리페이스 행은 `` | `#tag` | `` 형식이라 **백틱이 데이터가 아니라 문법**이므로, 코드 스팬 제거를 적용하면 529행이 전부 사라진다(원장 #31 — 코드 스팬 제외는 **링크 스캔 한정**이다).
@@ -128,6 +166,8 @@ done
 ```
 
 **(a) 를 조치하는 절차** — 승인 체크리스트와 기록 방법은 `.claude/rules/wiki-concepts.md` §사람 승인 절차 가 단일 출처다. `--fix` 로 자동화하지 않는다(사람 승인이 정의상 사람의 행위다).
+
+> 🔴 **(a) 가 0 이면 「승인할 것이 없다」가 아니라 「입력이 끊겼다」일 수 있다** (2026-08-10, 원장 #59). 이 큐는 **누군가 대조 후 `last_verified` 를 적어야만** 채워진다 — 그 기재가 절차에 없던 19회차 동안 구조적으로 0이었다. **대조를 수행했다면 그 자리에서 `last_verified` 를 남긴다**(`wiki-concepts.md` §대조를 마치면 그 자리에서 `last_verified` 를 남긴다). ⚠️ **검사기로는 못 잡는다** — 기록하지 않은 대조는 흔적이 없어 *"대조를 안 한 것"* 과 구별되지 않는다.
 
 - **`--fix` 불가**: (a)는 사람이 본문을 읽고 `verified: true` 로 바꿔야 한다. (b)는 어느 쪽이 맞는지 사람이 판단해야 한다.
 
@@ -313,6 +353,7 @@ done
 ### 12. 빠르게 변하는 주제 소스 점검
 
 - frontmatter `tags`에 `llm`, `ai`, `claude-code`, `agent` 중 하나 이상 포함된 파일 대상
+- ✅ **판정은 `scripts/wiki_scan.py` 의 `is_fast_moving(text)` 를 `import` 한다 — 직접 짜지 말 것** (2026-08-11 신설, 원장 #64). 🔴 **«포함» 은 «부분 문자열» 이 아니라 «집합 원소» 다.** `re.search(r"\b(llm|ai|claude-code|agent)\b", tags_line)` 은 **`-` 를 단어 경계로 보므로** `ai-engineering-evolution`·`engineering-culture`·`enterprise-ai-agent-architecture` 의 태그 **내부**에 적중한다 — 32회차 실측에서 이 오탐이 **7건을 10건으로** 부풀렸고 세 파일 모두 `tags` 에 해당 값 자체는 없다. §측정 정의가 `tags ∩ {…} ≠ ∅` 로 이미 규정한 것이며, 함수가 그것을 구현으로 못박아 부분 문자열 매칭을 **원리적으로 불가능**하게 만든다.
 - `updated` 날짜가 **90일** 이상 경과한 파일 탐지
 - ⚠️ **임계값은 90일이다. 30일(점검 #3)로 재지 말 것.** 2026-07-27 에 이 항목을 30일로 재측정해 원장의 정확한 수치("11건, 103~112일")를 틀렸다고 오판한 사례가 있다.
 - 점검 #3(30일 기준 전체 콘텐츠 점검)과 별도 — 이 점검은 **소스 갱신 권고**에 초점:
@@ -339,6 +380,12 @@ done
 - 누락이 보고되면 신규 생성분이므로 `scripts/attach-claim-metadata.py` 로 소급 부착한다 (`--dry-run` 기본, 파생 규칙은 `.claude/rules/wiki-concepts.md` §부착 도구와 파생 규칙).
 - ⚠️ **`evidence_level` 값의 타당성은 이 점검의 범위가 아니다.** `primary` 인지 `secondary` 인지는 본문-출처 정합을 읽어야 판정되며(도메인으로 판정 금지 — aws 인용 8건 중 primary 0건이었다), lint 는 **열거값 위반만** 본다.
 - 잘못된 enum 값은 WARN으로 보고한다.
+- ✅ **열거값은 `scripts/wiki_scan.py` 의 `claim_enums(rules_text)` 로 «읽는다» — 하드코딩·발명 금지** (2026-08-19 신설, 원장 #64-b)
+  - 🔴 37회차가 정본을 안 열고 열거값을 **지어내** 오탐 **333건**을 냈다(정본 교체 후 0). ⚠️ **오탐이 「그럴듯한 신호」로 보인다** — 333건은 *"심각한 문제를 발견했다"* 로 읽히지 *"내 검사기가 틀렸다"* 로 읽히지 않는다. **반대 방향도 같다: 정의를 좁게 지어내면 0 이 나오고 그것은 무결로 읽힌다**
+  - 🔴 **파싱 실패는 조용한 기본값이 아니라 하드페일이다** — 함수는 `ValueError`, 러너는 **exit 2**. *"위반 0"* 과 *"측정 불가"* 는 다른 상태다
+  - ⚠️ **산문을 긁지 말 것** — 같은 절의 서술이 `claim_status: source_backed` 같은 값을 문장 안에 쓴다. 「파이프 있는 아무 `키: a | b` 줄」로 훑으면 `confidence`·`last_verified`·`review_due` 까지 **5키**를 집는다. 판정 대상 쪽도 같다 — frontmatter 로 범위를 좁히지 않고 grep 하면 본문 산문에서 **가짜 값 6건**이 딸려 온다
+  - `scripts/attach-claim-metadata.py` 도 같은 함수로 자기 방출 리터럴이 정본의 원소인지 확인하고, 아니면 쓰기 전에 멈춘다
+  - 명령: `python3 scripts/lint-metrics.py --check` · 회귀 시험 `python3 scripts/test_lint_metrics.py`
 - ⚠️ **enum 판정 기준은 `.claude/rules/wiki-concepts.md` 의 `claim_status`/`evidence_level` 열거값 절 하나뿐이다.** 이 파일을 열어 대조할 것. `.claude/commands/compile.md`·`review.md` 는 각자 자기 워크플로의 **기본값만** 서술하므로, 한쪽만 읽고 다른 쪽 기본값을 위반으로 집계하면 오탐이 된다 — 4~8회차가 `compile.md` 만 보고 `review.md` 의 `inferred` 를 5회 연속 위반으로 오보했다 (2026-07-27 정정).
 
 ### 15. Knowledge Weather 생성
@@ -369,20 +416,24 @@ Required file shape:
 
 ### 16. Source Ledger 점검
 
-- `wiki/_meta/source-ledger.md` 존재 여부를 보고한다.
-- `wiki/concepts/` 및 `wiki/topics/` 아래 모든 `.md` 파일에서 frontmatter `sources` 필드 누락을 보고한다.
-- 첫 구현에서는 전체 ledger generator를 만들지 않고 reporting-only로 시작한다.
+- **2026-08-12 (세션 35차) — generator 구현됨.** `python3 scripts/generate-source-ledger.py`(또는 `--check`)가 `wiki/_meta/source-ledger.md` 를 `raw/**/*.md` 전건 + `wiki/concepts`·`wiki/topics` 의 `sources` 역참조로 생성한다. **손으로 편집하지 않는다** — 재실행하면 덮어쓴다.
+- `sources:` 는 인라인 `[...]` 과 YAML 블록 리스트 두 표기를 모두 파싱한다(파싱 안 하면 블록 표기 파일이 "출처 없음"으로 오판된다 — `wiki-concepts.md` 경고).
+- `--check` 는 낡았으면 exit 1. `graphify-build.sh` 에는 아직 넣지 않았다(초안 단계 — 매 빌드마다 340+행을 갱신하는 비용 대 이득을 다음 회차가 판단).
+- `wiki/concepts/` 및 `wiki/topics/` 아래 모든 `.md` 파일에서 frontmatter `sources` 필드 누락을 보고하는 것은 별도(기존 점검 #5 가 담당, 중복 구현 안 함).
 - section-level source list는 권장 정책이며 기존 파일의 즉시 마이그레이션을 강제하지 않는다.
 
-Generated Source Ledger shape:
+Generated Source Ledger shape (실제 컬럼 — `scripts/generate-source-ledger.py` 정본):
 
 ```markdown
 # Source Ledger
 
 | source | kind | compiled | wiki pages | trust | notes |
 |---|---|---:|---|---|---|
-| raw/example.md | raw | true | wiki/concepts/example.md | secondary | compiled by /compile |
+| raw/example.md | raw | true | wiki/concepts/example.md | secondary | verbatim: true |
 ```
+
+- `trust` = 그 출처를 인용하는 wiki 페이지들의 `evidence_level` 집합(다르면 `/` 로 병기, 인용 0건이면 `unused`).
+- `notes` = `verbatim` 필드 상태 + 미인용 여부.
 
 ## 보고서 형식
 

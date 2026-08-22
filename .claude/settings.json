@@ -14,7 +14,6 @@
       "Bash(bash scripts/*)",
       "Bash(scripts/graphify-py.sh*)",
       "Bash(scripts/graphify-bootstrap.sh*)",
-      "Bash(scripts/regen-graphify-skill.sh*)",
       "Bash(scripts/ingest-fetch.sh*)",
       "Bash(scripts/ingest-youtube.sh*)",
       "mcp__claude_ai_Notion__notion-fetch"
@@ -23,7 +22,8 @@
   "enabledPlugins": {
     "serena@claude-plugins-official": false,
     "jdtls-lsp@claude-plugins-official": false,
-    "kotlin-lsp@claude-plugins-official": false
+    "kotlin-lsp@claude-plugins-official": false,
+    "skill-creator@claude-plugins-official": true
   },
   "hooks": {
     "PreToolUse": [

@@ -13,6 +13,10 @@ output/
 
 # 첨부 파일 — 원천소스 보존용(raw/attachments 단일 위치). 명시적 요청 시에만 경로 지정해 읽기
 raw/attachments/
+
+# Web Clipper 캡처 인박스 (미처리 클립) — 무프롬프트 스캔만 막는다.
+# 명시 경로 읽기는 통과하므로 `/ingest raw/Clippings/<파일>` 승격은 그대로 작동한다.
+# 규정: .claude/rules/raw-ingest.md §Web Clipper 인박스
 raw/Clippings/
 
 # 민감 원본 자료 — 명시적 요청 없이는 Claude direct scan 대상 아님

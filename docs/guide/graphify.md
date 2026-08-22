@@ -44,10 +44,10 @@ pip install graphifyy
 | 볼트 규모 | graphify 없이 | graphify 있으면 |
 |---|---|---|
 | ~10개 파일 | wiki/index.md 한 번 읽으면 충분 | 큰 차이 없음 |
-| ~60개 파일 (현재) | 관련 파일을 일일이 찾아야 함 | god nodes/communities로 핵심 파악 |
+| ~60개 파일 | 관련 파일을 일일이 찾아야 함 | god nodes/communities로 핵심 파악 |
 | 100개+ 파일 | Claude가 전체 컨텍스트를 읽다가 한계 도달 | graphify query로 관련 source_file을 좁힌 뒤 필요 시 GRAPH_REPORT.md로 전체 지도 파악 |
 
-현재 이 볼트: **372 노드 · 644 엣지 · 22 커뮤니티** (`graphify-out/GRAPH_REPORT.md` 기준)
+이 볼트가 지금 어느 구간인지, 노드·엣지·커뮤니티가 몇 개인지는 `graphify-out/GRAPH_REPORT.md` 를 직접 본다. **수치는 여기에 옮겨 적지 않는다** — 재빌드마다 바뀌므로 사본은 반드시 낡는다 (`docs/architecture.md` 산출물 표와 같은 규율).
 
 ---
 
@@ -74,7 +74,7 @@ open graphify-out/graph.html
 
 - 노드를 클릭하면 연결된 개념이 강조됩니다.
 - 드래그로 레이아웃을 조정할 수 있습니다.
-- 전체 372개 노드 중 연결이 많은 god nodes가 중앙에 위치합니다.
+- 연결이 많은 god nodes가 중앙에 위치합니다.
 
 ### 2. `GRAPH_REPORT.md` — LLM + 사람 읽기용 요약
 
@@ -282,14 +282,18 @@ cat graphify-out/cost.json
 
 ---
 
-## 현재 볼트 그래프 상태
+## 볼트 그래프 상태는 어디서 보나
 
-`graphify-out/GRAPH_REPORT.md` (2026-04-14 기준) 핵심 수치:
+🔴 **수치를 이 문서에 옮겨 적지 않는다.** 재빌드마다 바뀌므로 사본은 반드시 낡는다 — 실제로 이 절은 2026-04-14 값(`372 노드 · 644 엣지 · 22 커뮤니티` · `138 파일`)을 4개월간 들고 있었고, 2026-08-17 시점 실측은 노드가 **17배 이상**이었다.
 
-- **138 파일 · ~94,690 단어** 처리
-- **372 노드 · 644 엣지 · 22 커뮤니티**
-- **Top God Nodes**: `spring-cloud-msa` (20), `에러 처리 Topic` (19), `Circuit Breaker` (15)
-- **Knowledge Gaps**: 126개 고립 노드 (연결 개선 여지)
+`graphify-out/GRAPH_REPORT.md` 를 직접 본다. 거기 실리는 항목은 이렇다:
+
+- 처리한 파일 수 · 단어 수 (`## Corpus Check`)
+- 노드 · 엣지 · 커뮤니티 수 (`## Summary`)
+- Top God Nodes (연결이 가장 많은 노드)
+- Knowledge Gaps (고립 노드 — 연결 개선 여지)
+
+빠른 요약만 필요하면 `graphify-out/GRAPH_DIGEST.md` (≤80줄).
 
 ---
 
@@ -377,8 +381,28 @@ grep -rn 'python3\|\$PYTHON' .claude/skills/graphify/SKILL.md .claude/skills/gra
 #   → 2건만 정상: SKILL.md 의 치환 규약 설명 1건,
 #      references/exports.md 의 Claude Desktop MCP 설정 JSON 1건
 #      (외부 앱이 읽는 설정이라 상대경로 래퍼로 바꾸면 안 된다)
+python3 scripts/check-mirrors.py
+#   → exit 0. Codex 용 사본 복사가 실제로 됐는지 보는 검사다.
+#      2026-08-19 신설. 종전 `diff -rq .agents/skills/graphify/ .claude/skills/graphify/`
+#      를 흡수했으므로 그것을 따로 돌릴 필요는 없다.
+#      같은 실행이 `.claude/settings.json` ↔ `.codex/hooks.json` 투영도 대조하고,
+#      매핑표에 선언되지 않은 미러 자산이 있으면 실패한다 (원장 #74).
 ```
 
 마지막으로 `.graphify_version` 을 새 버전으로 갱신하고,
 `.agents/skills/graphify/` (Codex 용 사본) 에 같은 내용을 복사한 뒤
 `bash scripts/sync-scaffold.sh --apply` 로 scaffold 에 전파한다.
+
+> 🔴 **복사와 버전 스탬프의 순서를 붙여 두지 말 것 — 갈리면 사본이 거짓 버전을 든다.**
+> 0.9.40 재포크(`1f814aa`)가 `.claude/` 만 고치고 이 복사 단계를 건너뛴 뒤,
+> 후속 커밋(`98910f1`)이 **양쪽 `.graphify_version` 을 함께 0.9.40 으로 올렸다.**
+> 그래서 `.agents/skills/graphify/` 는 **0.9.40 을 표방하면서 내용은 재포크 직전
+> (`1f814aa~1`) 상태로 4개 파일이 동결**돼 있었다 — SKILL.md·`extraction-spec`·`query`·
+> `update` 가 `1f814aa~1` 의 `.claude/` 판과 **바이트 동일**임을 md5 로 확인했다(2026-08-17).
+> 누락분에는 시맨틱 캐시 `prompt_file`(SPEC_PATH) 귀속, `check_semantic_cache`/
+> `save_semantic_cache` 의 `root=`·`allowed_source_files=`, 빈 그래프·축소 가드가 들어 있어
+> **Codex 쪽이 그 사본으로 돌면 캐시를 엉뚱한 자리에 쓰고 가드 없이 산출물을 덮어쓴다.**
+> 위 `scripts/check-mirrors.py` 가 이 상태를 잡는 검사이며, 그래서 사후 검사 블록 안에 있다
+> (2026-08-19 이전에는 `diff -rq` 였고, 그 검사는 스킬 폴더 한 쌍만 봤다 — 원장 `#74`).
+> 재포크 생성 시점(`4e84e32`)의 의도적 델타는 `Claude`→`Codex` 낱말 치환 6곳뿐이었고
+> 그것도 `4aa0ec5` 의 references 재편에서 이미 사라졌다 — **지금 규범은 그대로 복사다.**

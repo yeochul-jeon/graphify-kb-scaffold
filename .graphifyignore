@@ -1,4 +1,6 @@
-# Obsidian Web Clipper 원본 아카이브 — 그래프 인덱싱 대상 아님
+# Obsidian Web Clipper 캡처 인박스 (미처리 클립) — 그래프 인덱싱 대상 아님.
+# 승격(`/ingest <경로>`)으로 raw/ 로 이동한 뒤에 그래프에 들어온다.
+# 규정: .claude/rules/raw-ingest.md §Web Clipper 인박스
 raw/Clippings/
 
 # 민감 원본 자료 — 그래프 인덱싱 대상 아님
@@ -20,3 +22,34 @@ dev-logs/
 
 # 그래프 자기참조 산출물 — DIGEST·REPORT·backlinks 를 다시 인덱싱하지 않음 (2026-06-26)
 graphify-out/
+
+# Codex 용 graphify 스킬 사본 — .claude/skills/graphify/ 의 바이트 동일 복제본이라
+# 인덱싱하면 같은 개념이 두 벌 들어와 허브 가중치를 부풀린다 (gravity well 방지, 2026-08-17).
+# ⚠️ 드리프트 탐지는 그래프가 아니라 `diff -rq .agents/skills/graphify/ .claude/skills/graphify/`
+#    가 맡는다 — CLAUDE.md·AGENTS.md·docs/guide/graphify.md §재포크 사후 검사에 등재.
+# 🔴 이 줄은 **스캔 제외**이지 **기존 노드 제거가 아니다.** 2026-08-17 `/graphify --update`
+#    실행으로 확인했다 — 이 줄이 있는 상태로 돌렸는데도 그래프의 `.agents/` 노드 65개가
+#    그대로 남았다. `build_merge` 의 `prune_sources` 는 **삭제된 파일만** 받고(이번 deleted=0),
+#    제외된 파일은 재추출 대상(`new_chunks`)에도 없어 replace-on-re-extract 에도 안 걸린다.
+#    manifest 행은 `scan_corpus` 가 정리한다(항목 1310 → 1301). **노드를 실제로 빼려면
+#    전체 재빌드가 필요하다** — 미조치이며 그 사실을 여기 남긴다.
+.agents/
+
+# skill-creator eval 산출물 — 반복마다 출력·트랜스크립트·JSON 이 쌓이는 세션 메타 (2026-08-17)
+# 스킬 디렉터리의 형제로 <skill-name>-workspace/ 가 생긴다(SKILL.md §Running and evaluating).
+# .claude/skills/ 는 인덱싱 대상이므로 이 줄이 없으면 첫 eval 부터 그래프에 유입된다.
+*-workspace/
+
+# wiki/backlinks.md — 자동 생성 역인덱스(rebuild-backlinks.py). 파일 자체는 계속
+# 재생성하되 **그래프에는 넣지 않는다** (2026-08-19 등재, 원장 #72 계열).
+# 근거: 이 파일은 본문 [[link]] 전체를 역인덱싱하는데, cross-edge 정책은 본문 링크를
+#   의도적으로 배제한다(rebuild-cross-edges.py 독스트링: "스치듯 언급까지 관계로 잡지
+#   않는다"). 그래서 이 파일을 LLM 추출하면 배제된 관계가 뒷문으로 들어온다 —
+#   실측 2026-08-19: 엔트리 1910건 중 507건만 엣지가 됐고(임의 27% 부분집합),
+#   그중 327쌍은 관련 개념 후보와 겹쳐 cross-edge 를 **양보시키고** 있었다
+#   (rebuild-cross-edges.py `occupied` 스킵). 즉 relation 타입까지 오염시켰다.
+# 🔴 이 줄은 스캔 제외이지 기존 노드 제거가 아니다(위 .agents/ 주석과 같은 성질).
+#   등재와 함께 graph.json 에서 507 엣지를 **수동 제거**했다. 다음 빌드의
+#   rebuild-cross-edges.py 가 327쌍을 wikilink 로 되살리고, 나머지 180쌍(본문 링크
+#   전용)은 정책상 의도된 소실이다.
+wiki/backlinks.md

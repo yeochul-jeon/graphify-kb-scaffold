@@ -138,11 +138,19 @@ wiki/는 LLM 전용 영역입니다. 직접 편집 후 커밋하려는 것이 �
 
 **해결 A**: 의도한 수정이면 `y`를 입력하세요.
 
-**해결 B**: Claude Code가 자동 커밋할 때 막히면 환경 변수를 설정하세요.
+**해결 B**: Claude Code가 자동 커밋할 때 막히면 환경 변수를 설정하세요. **사유는 의무입니다.**
 
 ```bash
-ALLOW_WIKI_EDIT=1 git commit -m "feat: wiki 수동 수정"
+ALLOW_WIKI_EDIT=1 ALLOW_WIKI_EDIT_REASON="wiki 수동 수정" git commit -m "feat: ..."
 ```
+
+**해결 B-2**: `bash scripts/graphify-build.sh` 직후에 막혔다면 사람 편집이 아닐 수 있습니다. 빌드 마지막 단계가 자기 측정 문서의 수치 마커를 자동 갱신하므로, staged diff 가 `<!--m:...-->` 값뿐이면 그쪽 사유를 씁니다.
+
+```bash
+ALLOW_WIKI_EDIT=1 ALLOW_WIKI_EDIT_REASON="build auto-injection (inject-self-metrics)" git commit -m "chore(wiki): ..."
+```
+
+판별 기준(파일 개수가 아니라 frontmatter `self_measuring: true`)과 두 갈래의 구분은 [.claude/rules/wiki-concepts.md](../../.claude/rules/wiki-concepts.md) §우회 사유의 두 갈래를 따릅니다.
 
 **해결 C**: hook을 완전히 비활성화하려면:
 
