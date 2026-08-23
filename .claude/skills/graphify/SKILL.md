@@ -268,6 +268,22 @@ print(f'Merged {len(chunks)} chunks: {total_in:,} in / {total_out:,} out tokens'
 "
 ```
 
+**Step B3-a - Spec compliance gate (before caching)**
+
+🔴 Run this BEFORE saving to cache. A chunk that violates the spec and reaches the cache
+persists under the namespace, and cache hits are **not re-validated** — one bad chunk then
+poisons every later build. This is why the 2026-08-23 migration had to hand-edit 53 nodes
+and 62 edges inside the cache.
+
+```bash
+python3 scripts/check-extraction-chunks.py
+```
+
+If it exits non-zero it prints every violating file and id. **Do not proceed to caching.**
+Re-dispatch the subagents that produced those chunks, pointing them at the `_origin RULE`
+in `references/extraction-spec.md`. Delete the offending `graphify-out/.graphify_chunk_NN.json`
+before re-running so a stale copy is not merged again.
+
 Save new results to cache. Pass the same SPEC_PATH as Step B0 — it stamps each entry with the prompt that produced it, and a write under a different prompt than the read lands where the next run won't look:
 ```bash
 scripts/graphify-py.sh -c "

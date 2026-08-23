@@ -63,6 +63,9 @@ SYNC_ITEMS=(
   "file:scripts/setup-hooks.sh"
   "file:scripts/graphify-bootstrap.sh"
   "file:scripts/graphify-py.sh"
+  # SKILL.md Step B3-a 가 부르는 스펙 준수 게이트. SKILL.md 가 이미 전파되므로
+  # 이 스크립트가 없으면 전파된 스킬이 없는 파일을 부른다 (2026-08-23).
+  "file:scripts/check-extraction-chunks.py"
   "file:scripts/sync-scaffold.sh"
   # scripts/check-mirrors.py 는 **의도적으로 넣지 않는다** (2026-08-19).
   #   그 검사는 `.agents/`·`.codex/` 아래 파일 전건이 매핑표에 청구되기를 요구하는데,
