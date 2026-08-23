@@ -13,7 +13,7 @@ flowchart LR
     subgraph src ["graphify-kb (source of truth)"]
         A1[".claude/commands/"]
         A2[".claude/skills/graphify/"]
-        A3["scripts/*.sh"]
+        A3["scripts/*.sh · scripts/*.py"]
         A4["docs/guide/"]
         A5["CLAUDE.md · .claudeignore · ..."]
     end
@@ -114,7 +114,17 @@ sequenceDiagram
 | `.claudeignore` / `.graphifyignore` | file | 스캔 제외 패턴 |
 | `CLAUDE.md` | file | LLM 행동 지침 |
 | `docs/architecture.md` / `docs/tutorial.md` / `docs/obsidian-setup.md` | file | 공유 문서 |
-| `scripts/*.sh` (5개 + sync-scaffold.sh) | file | 모든 운영 스크립트 (self-sync 포함) |
+| `scripts/*.sh` (13개, self-sync 포함) | file | 운영 스크립트 |
+| `scripts/*.py` (19개) | file | lint·backlinks·graph 재빌드 등 위 자산이 호출하는 파이썬 스크립트 |
+
+전파 대상은 **`scripts/` 36개 중 32개**다. 개별 `file:` 항목으로 등재하며 `dir:scripts` 로 뭉치지 않는다 — `--delete` 가 scaffold 전용 `regen-graphify-skill.sh` 를 지운다.
+
+전파되지 않는 4개:
+
+| 파일 | 이유 |
+|------|------|
+| `check-mirrors.py` | scaffold 에 `.agents/`·`.codex/` 가 없어 「선언된 미러 루트 부재」 로 무조건 실패한다 (2026-08-19). 전파하려면 「미러 자산 0건이면 통과」 분기가 필요하며 별건이다. preflight 의 `EXEMPT_REFS` 에 등재돼 있다 |
+| `check-raw-structure.py` / `compare-raw-source.py` / `test_check_extraction_chunks.py` | 어떤 전파 자산도 호출하지 않는다 (포함 기준 미달) |
 
 ### 제외 (denylist)
 
@@ -181,6 +191,21 @@ scripts/sync-scaffold.sh --apply
 scripts/sync-scaffold.sh --apply --force
 ```
 
+### 6. 참조 무결성 preflight (exit 5)
+
+rsync 직전, 전파 대상 자산 전체에서 `scripts/<name>.(py|sh)` 참조를 긁어 **전부 allowlist 에도 있는지** 검사합니다. 없으면 dry-run·apply 양쪽에서 **exit 5 로 죽습니다.**
+
+```
+[err]  scripts/wiki_scan.py
+[err]  위 스크립트를 전파 자산이 부르는데 allowlist 에 없습니다.
+```
+
+전파 대상에는 스크립트 자신도 들어 있으므로 이 검사는 **전이 참조까지 스스로 닫습니다** — 예컨대 `graphify-build.sh` 가 부르는 `cleanup-meta-caches.py`·`rebuild-graph-report.py` 는 전파 자산을 1차로 훑을 때는 안 보이고, `graphify-build.sh` 가 allowlist 에 들어온 뒤에야 잡힙니다.
+
+**왜 있는가**: 2026-08-24 에 전파 자산이 부르는 스크립트 25종이 scaffold 에 없다는 것이 발견됐습니다. scaffold 사용자가 `/lint`·`/compile`·`/ingest` 를 부르거나 `AGENTS.md` 지시대로 `graphify-build.sh` 를 돌리면 없는 파일을 부르는 상태였습니다. `.claude/settings.json` 의 훅들은 `[ -f ... ]` 가드가 있어 조용히 건너뛰었으므로 **증상이 드러나지 않았습니다** — 그래서 사람 눈이 아니라 실행되는 검사로 못박았습니다.
+
+**해제 방법은 두 가지뿐입니다**: SYNC_ITEMS 에 추가하거나, 전파하지 않을 사유를 문서에 적고 `EXEMPT_REFS` 에 넣거나. 검사를 끄는 플래그는 없습니다.
+
 ---
 
 ## 트러블슈팅
@@ -189,6 +214,7 @@ scripts/sync-scaffold.sh --apply --force
 |------|------|------|
 | `target working tree is dirty` (exit 2) | scaffold에 미커밋 변경 | `git stash` 또는 커밋 후 재실행, 또는 `--force` |
 | `target path is not a git repo` (exit 3) | 경로 오타 또는 clone 누락 | `SCAFFOLD_DIR` 확인, `git clone` 재시도 |
+| `... allowlist 에 없습니다` (exit 5) | 전파 자산이 부르는 스크립트가 SYNC_ITEMS 에 없음 | 해당 스크립트를 SYNC_ITEMS 에 추가, 또는 사유를 문서화하고 `EXEMPT_REFS` 에 등재 (주의사항 §6) |
 | `source not found (skipping): <path>` | allowlist 경로가 main에 없음 | main에서 해당 파일 경로 확인 후 SYNC_ITEMS 수정 |
 | 두 저장소 drift 의심 | 오랫동안 sync 미실행 | `diff -rq --exclude='.git' <src> <tgt>` 로 수동 감사 |
 | dry-run에서 과다 삭제 표시 | `--delete` 항목의 scaffold 전용 파일 | denylist 점검 또는 해당 항목을 `file` 타입으로 분리 |

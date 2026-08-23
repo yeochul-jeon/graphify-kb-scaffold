@@ -48,6 +48,16 @@ wiki 품질 자가 점검. 깨진 링크, 고아 파일, 중복, 오래된 콘�
 - `wiki/index.md`에도 없는 파일 포함
 - **`--fix` 시**: `wiki/index.md`에 추가
 
+### 2b. island (인바운드 0) 탐지 — `#2` 와 **다른 지표다** (42회차 신설, 원장 #81)
+
+- ✅ **판정은 `scripts/wiki_scan.py` 의 `island_slugs(backlinks_text, slugs)` 를 `import` 한다 — 직접 짜지 말 것.** 러너 `scripts/lint-metrics.py` 가 매 회차 함께 출력하며 `--json` 에도 실린다. 입력은 `wiki/backlinks.md` 의 `## [[슬러그]]` **블록 존재**다(그 파일이 이미 결정론적 strict-inbound 역인덱스라 코퍼스 재스캔이 필요 없다).
+- 🔴 **`#2` 의 정의를 넓혀 흡수하지 않는다.** `#2` orphan 은 *"index 미등재 **AND** 인바운드 0"* 이라 **index 에 정상 등재된 island 을 논리곱에서 걸러낸다.** 두 지표를 합치면 회차 간 수치 비교가 깨진다(§재측정 규율 3항).
+- 🔴 **`grep <슬러그> wiki/backlinks.md` 의 히트 수로 판정하면 방향이 뒤집힌다.** 히트 대부분은 *다른 개념 블록 안의 referrer 항목* — 즉 그 슬러그의 **아웃바운드**다. 41회차가 이 오독으로 인바운드 **0**인 `unlazy-skill` 을 *"각 4곳 이상"* 으로 보고했고, 그렇게 **39·40·41회차가 island 을 2로 3회차 연속 오보**했다(실측 6).
+- ⚠️ **원인은 정의 부재가 아니라 러너 부재였다.** `wiki/_meta/weather.md` §측정 정의의 `Islands(inbound 0)` 행이 정확한 정의를 이미 담고 있었는데 그 값을 내는 코드가 없어, 매 회차가 정의를 재실행하는 대신 원장 항목(`#68`·`#69`)의 존재만 재확인했다. **`#64-b`(정본을 안 읽어 생긴 오탐)와 방향이 반대다.**
+- ⚠️ 값이 낡지 않으려면 `wiki/backlinks.md` 가 최신이어야 한다 — `rebuild-backlinks.py`(점검 #7·`graphify-build.sh` 내장)를 먼저 돌린다.
+- **`--fix` 불가**: 역참조를 어느 문서에 어느 맥락으로 걸지는 큐레이션 판단이다. 보고서에만 표시한다.
+- 회귀 시험: `python3 scripts/test_lint_metrics.py` (파손본 `_naive_island_grep` 이 41회차 오독을 재현해 실제로 깨지는지 먼저 확인한다)
+
 ### 3. 오래된 콘텐츠 탐지
 
 - frontmatter의 `updated` 날짜가 `wiki_scan.STALE_DAYS`(**30일**) 이상 된 파일
