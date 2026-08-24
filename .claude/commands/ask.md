@@ -81,6 +81,7 @@ paginate: true
 - `output/chart-YYYYMMDD-HHmm.py`로 저장
 - `python3 output/chart-YYYYMMDD-HHmm.py` 실행해 PNG 생성
 - 간단한 관계도는 mermaid 코드블록으로 마크다운에 인라인 포함
+- 도식이 길면(대략 15노드 초과) mermaid 블록을 `<details>` 로 접는다. 생성한 도식의 PNG 첨부는 하지 않는다 — `output/*.png` 는 gitignore 대상이다
 
 **`--html` 옵션 (동적 HTML):**
 파일명: `output/report-YYYYMMDD-HHmm.html`

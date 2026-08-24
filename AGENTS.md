@@ -15,6 +15,15 @@ Rules:
 - ⚠️ **전역 `graphify install` 금지** — `--project` 없이 실행하면 `~/.claude/skills/graphify/` 와 `~/.claude/CLAUDE.md` 등록 블록을 만들어 이 포크를 가린다. 반드시 `graphify install --project`. 전역 PreToolUse 훅이 차단하지만 터미널 직접 실행은 못 막는다. 경위: docs/guide/graphify.md §전역 스코프 금지
 - scaffold 동기화: `bash scripts/sync-scaffold.sh [--apply]` 로 템플릿 자산을 graphify-kb-scaffold에 단방향 재전파. 가이드: docs/guide/scaffold-sync.md
 
+## 위임 규율 (서브에이전트 · 모델 선택)
+
+- **결정론적 검사는 위임하지 않는다** (exit code·JSON 키·파일 존재). 커맨드 출력 자체가 증거인데, 위임하면 「출력을 요약한 말」이 「출력」을 대체해 증거가 약해진다.
+- **판단이 들어가는 검수는 위임한다** (중복·모호성·충돌). 내가 쓴 문안을 내가 검수하면 「내가 의도한 뜻」으로 읽어 모호성을 못 본다.
+- 🔴 **제외 목록 없는 검증 위임 금지.** 이 저장소는 결론을 파일로 남긴다(계획서·인계·원장). 제외하지 않으면 서브에이전트가 기대값을 읽고 그대로 확인해주는 **에코**가 된다 — 깨진 눈가림은 없느니만 못한 확신을 준다.
+- 🔴 **측정을 위임할 때는 돌릴 커맨드를 지정한다.** 지정할 수 없는 측정은 위임하지 않는다. 원장 `#83`(승인 큐 인용 횟수를 `grep -rl` 로 재서 16/27/6 — 정본 `scripts/approval-targets.py` 의 `citations()` 는 3/5/2)·`#82`(한 소비자만 보고 누락 3종 — 실제 25종) 둘 다 「어떻게 세는가」를 위임받은 쪽이 스스로 정한 데서 왔다.
+- 모델 배치는 작업 성격을 따른다 — 파일 위치 찾기·텍스트 추출은 haiku / 문면 대조·중복 검수·구조 점검은 sonnet / **측정 정의 판단·규칙 설계·원장 판정은 위임하지 않는다.**
+- ⚠️ **서브에이전트는 output style 을 상속하지 않는다** (fork 만 예외). 돌려받은 보고에는 이 저장소의 응답 규약(있다면 `.claude/output-styles/` 아래)이 걸려 있지 않으므로, **그 수치를 그대로 인용하지 말고 다시 잰다.**
+
 ## AI Memory Boundaries
 
 For memory-layer responsibilities, see `docs/guide/ai-memory-stack.md`. Keep this file focused on procedural rules.
