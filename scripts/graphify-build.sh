@@ -32,6 +32,12 @@ else
   # ⚠️ PyYAML 불필요 — 시스템 python3 로 돈다.
   echo "▶ index.md 날짜 열 주입 ..." >&2
   python3 scripts/sync-index-dates.py
+  # raw→wiki 대조표 재생성. 내용이 같으면 쓰기를 건너뛰므로(generate-source-ledger.py:135-137)
+  # 무변경 빌드는 mtime·git diff 를 만들지 않는다 — 실측 real 0.19/0.09/0.09s (3회, 2026-08-25).
+  # wiki/_meta 는 .graphifyignore 대상이라 그래프 비용도 0 이다.
+  # 편입 근거: 2026-08-12~08-25 실측에서 빌드 36회 대 원장 갱신 8회로 표류가 기본값이었다.
+  echo "▶ source-ledger.md 재생성 ..." >&2
+  scripts/graphify-py.sh scripts/generate-source-ledger.py
   # wiki [[wikilink]] → graph cross-edge 재적용.
   # 반드시 'graphify update' 다음이어야 한다 — update 가 graph.json 을 전체 재생성하며
   # doc 개념 간 엣지를 지우기 때문. 여기서 되돌려야 회귀가 구조적으로 해소된다.
