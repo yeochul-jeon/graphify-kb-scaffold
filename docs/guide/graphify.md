@@ -30,6 +30,7 @@ pip install graphifyy
 > 상위 graphify v0.4.13+는 설치 후 `graphify install` 명령으로 `CLAUDE.md` / `.claude/settings.json` 에 훅을 자동 주입합니다.  
 > 이 프로젝트는 이미 커스텀 설정을 보유하므로, 위 명령을 실행하면 **기존 파일이 덮어써집니다**.  
 > 신규 저장소에서 graphify를 처음 통합할 때만 사용하세요.
+> 이 문서를 가진 저장소(graphify-kb·scaffold·scaffold 로 만든 저장소)는 모두 이미 설정돼 있어 이 예외에 해당하지 않는다 — `AGENTS.md` 「`graphify install` 실행 금지」.
 
 ---
 
@@ -317,6 +318,8 @@ cat graphify-out/cost.json
 | [graphify.net/kr/](https://graphify.net/kr/) | 공식 홈페이지 (한국어) |
 | [github.com/sponsors/safishamsi](https://github.com/sponsors/safishamsi) | 후원 |
 
+> ⚠️ **정본 graphify-kb 에서만** — `scripts/check-mirrors.py` 가 없는 저장소(scaffold·scaffold 로 만든 저장소)에서는 스킬을 고치지 않는다. graphify-kb 에서 고친 뒤 graphify-kb 쪽에서 `sync-scaffold.sh --target <그 저장소>` 로 밀어 넣는다.
+>
 > graphify 스킬 수정 시: `.claude/skills/graphify/SKILL.md` (core) 와 `.claude/skills/graphify/references/*.md` (8분할 lazy-load) 를 직접 편집하세요.
 
 ## 전역 스코프 금지
@@ -353,6 +356,8 @@ graphify 스킬은 **repo-local 사본만** 쓴다. 사용처 3곳은 각자 사
 
 ### upstream 버전 추적 · 재포크 절차
 
+> ⚠️ **이 절 전체는 정본 graphify-kb 에서만 수행한다** — `scripts/check-mirrors.py` 가 없는 저장소(scaffold·scaffold 로 만든 저장소)에서는 아래의 스킬 재작성·`check-mirrors.py` 실행·`.agents/` 복사·`sync-scaffold.sh` 실행을 하나도 하지 않는다.
+
 `regen-graphify-skill.sh` 는 `8093488` 에서 삭제됐다. 수동 절차:
 
 ```bash
@@ -375,6 +380,7 @@ cat .claude/skills/graphify/.graphify_version   # 포크 기준 버전
 **재포크 사후 검사** (눈으로 넘기지 말 것):
 
 ```bash
+# ⚠️ 정본 graphify-kb 전용 — scripts/check-mirrors.py 가 없는 저장소에서는 이 블록을 실행하지 않는다
 grep -rn '\$(' .claude/skills/graphify/SKILL.md .claude/skills/graphify/references/*.md
 #   → 실행 블록 내 0건. 산문 설명(`$(...)` 표기)만 남아야 한다.
 grep -rn 'python3\|\$PYTHON' .claude/skills/graphify/SKILL.md .claude/skills/graphify/references/*.md

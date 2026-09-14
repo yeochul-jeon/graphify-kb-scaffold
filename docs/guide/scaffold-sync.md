@@ -39,7 +39,10 @@ flowchart LR
 
 ## 빠른 시작
 
+> ⚠️ **아래 명령은 graphify-kb 안에서만 실행한다.** scaffold 로 만든 저장소에도 `sync-scaffold.sh` 가 복사돼 있지만, 거기서 인자 없이 실행하면 기본 타겟 `../graphify-kb-scaffold` 로 **그 저장소 내용이 공개 scaffold 에 동기화된다.** 다른 하류 저장소로 보낼 때도 graphify-kb 에서 `--target <경로>` 를 붙여 실행한다.
+
 ```bash
+# ⚠️ graphify-kb 안에서만 실행 — scaffold 로 만든 저장소에서 실행 금지 (위 경고 참조)
 # 1. dry-run — 변경될 파일 미리 보기 (실제 변경 없음)
 scripts/sync-scaffold.sh
 
