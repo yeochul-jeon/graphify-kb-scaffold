@@ -12,3 +12,9 @@ __pycache__/
 graphify-out/*
 !graphify-out/.gitkeep
 wiki/graphify-out/
+
+# 훅 런타임 상태 (graphify-kb .gitignore:28-31 과 동일)
+.work-log/last-session.md
+.work-log/.graphify-hint-seen
+.work-log/.wiki-dirty
+.work-log/.graphify-fail-count
