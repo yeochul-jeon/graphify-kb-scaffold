@@ -13,9 +13,6 @@
       "Bash(awk:*)",
       "Bash(gh repo:*)",
       "Bash(du:*)",
-      "Bash(/Users/YOUR_USER/.local/pipx/venvs/graphifyy/bin/python -c \"from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code\\(Path\\('.'\\)\\)\")",
-      "Bash(/Users/YOUR_USER/.local/pipx/venvs/graphifyy/bin/graphify build:*)",
-      "Bash(/Users/YOUR_USER/.local/pipx/venvs/graphifyy/bin/graphify --help)",
       "Read(/Users/YOUR_USER/.claude/**)",
       "Read(/Users/YOUR_USER/.claude/skills/**)"
     ]
