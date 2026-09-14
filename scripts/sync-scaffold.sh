@@ -210,7 +210,9 @@ if [[ "$APPLY" == false ]]; then
     if [[ "$type" == "dir" ]]; then
       result=$(rsync -ain --delete --itemize-changes "$src/" "$TARGET/$rel/" 2>/dev/null || true)
     else
-      result=$(rsync -ain --itemize-changes "$src" "$TARGET/$rel" 2>/dev/null || true)
+      # openrsync(macOS /usr/bin/rsync)는 대상을 파일 경로로 주면 내용·mtime 이 같아도 `>f.......` 를 낸다.
+      # 부모 디렉터리를 대상으로 줘야 실제로 전송될 파일만 나온다 (2026-09-14 대조 실험, 최초 발견 log.md:4749).
+      result=$(rsync -ain --itemize-changes "$src" "$TARGET/$(dirname "$rel")/" 2>/dev/null || true)
     fi
 
     if [[ -n "$result" ]]; then
