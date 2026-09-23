@@ -101,5 +101,3 @@ key_insights:
 - insights: {N}개
 - next: /compile raw/sessions/{파일명}
 ```
-
-allowed-tools: Read, Write, Edit, Glob, Bash

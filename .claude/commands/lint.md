@@ -391,7 +391,7 @@ done
 - ⚠️ **`evidence_level` 값의 타당성은 이 점검의 범위가 아니다.** `primary` 인지 `secondary` 인지는 본문-출처 정합을 읽어야 판정되며(도메인으로 판정 금지 — aws 인용 8건 중 primary 0건이었다), lint 는 **열거값 위반만** 본다.
 - 잘못된 enum 값은 WARN으로 보고한다.
 - ✅ **열거값은 `scripts/wiki_scan.py` 의 `claim_enums(rules_text)` 로 «읽는다» — 하드코딩·발명 금지** (2026-08-19 신설, 원장 #64-b)
-  - 🔴 37회차가 정본을 안 열고 열거값을 **지어내** 오탐 **333건**을 냈다(정본 교체 후 0). ⚠️ **오탐이 「그럴듯한 신호」로 보인다** — 333건은 *"심각한 문제를 발견했다"* 로 읽히지 *"내 검사기가 틀렸다"* 로 읽히지 않는다. **반대 방향도 같다: 정의를 좁게 지어내면 0 이 나오고 그것은 무결로 읽힌다**
+  - 🔴 정본을 열지 않고 열거값을 지어내면 오탐이 대량으로 나온다 — 실례 **333건**, 정본 교체 후 0(원장 #64-b). ⚠️ **오탐이 「그럴듯한 신호」로 보인다** — 333건은 *"심각한 문제를 발견했다"* 로 읽히지 *"내 검사기가 틀렸다"* 로 읽히지 않는다. **반대 방향도 같다: 정의를 좁게 지어내면 0 이 나오고 그것은 무결로 읽힌다**
   - 🔴 **파싱 실패는 조용한 기본값이 아니라 하드페일이다** — 함수는 `ValueError`, 러너는 **exit 2**. *"위반 0"* 과 *"측정 불가"* 는 다른 상태다
   - ⚠️ **산문을 긁지 말 것** — 같은 절의 서술이 `claim_status: source_backed` 같은 값을 문장 안에 쓴다. 「파이프 있는 아무 `키: a | b` 줄」로 훑으면 `confidence`·`last_verified`·`review_due` 까지 **5키**를 집는다. 판정 대상 쪽도 같다 — frontmatter 로 범위를 좁히지 않고 grep 하면 본문 산문에서 **가짜 값 6건**이 딸려 온다
   - `scripts/attach-claim-metadata.py` 도 같은 함수로 자기 방출 리터럴이 정본의 원소인지 확인하고, 아니면 쓰기 전에 멈춘다
@@ -510,5 +510,3 @@ Generated Source Ledger shape (실제 컬럼 — `scripts/generate-source-ledger
 - fixed: [자동 수정 내역 또는 "없음"]
 - report: output/lint-report-YYYYMMDD.md
 ```
-
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep

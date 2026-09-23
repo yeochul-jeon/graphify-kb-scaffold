@@ -192,5 +192,3 @@ scripts/graphify-py.sh scripts/check-title-dup.py --new raw/<새파일>.md
 - saved: raw/[파일명].md
 - size: [줄 수]줄
 ```
-
-allowed-tools: Read, Write, Bash, WebFetch, mcp__claude_ai_Notion__notion-fetch

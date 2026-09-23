@@ -150,5 +150,3 @@ compiled_date: YYYY-MM-DD
 - created: [신규 생성된 wiki 파일 목록]
 - updated: [업데이트된 wiki 파일 목록]
 ```
-
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep

@@ -115,5 +115,3 @@ review_due: null
 - promoted: [승격된 wiki 파일 목록 또는 "없음"]
 - updated: [보완된 wiki 파일 목록 또는 "없음"]
 ```
-
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep

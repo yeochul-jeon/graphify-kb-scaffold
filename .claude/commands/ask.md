@@ -158,5 +158,3 @@ wiki 반영은 사람이 `/review output/<파일명>.md`를 실행하고 승인�
 - output: output/[파일명]
 - promotion: [승격 후보 요약 또는 "요청 안 함"]
 ```
-
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
