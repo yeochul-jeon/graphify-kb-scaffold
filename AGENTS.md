@@ -5,6 +5,7 @@ This project has a graphify knowledge graph at graphify-out/.
 Rules:
 - 코드/아키텍처/개념 질의의 **첫 행동(FIRST ACTION)** 은 반드시 Bash 로 `scripts/graphify-py.sh -m graphify query "<질문>" --budget 1500` 실행이다 (좁은 추적은 `--dfs --budget 800`). 그 출력의 source_file 목록에서 핵심 파일만 골라 읽고 답한다.
   - ⚠️ **파일을 읽는 행위(Read GRAPH_DIGEST.md / GRAPH_REPORT.md / wiki/*)는 query 명령 실행을 대체하지 않는다.** "다이제스트를 먼저 읽기"는 이 규칙 위반이다 — 반드시 query 명령(Bash)을 먼저 돌리고, 그 결과로 읽을 파일을 정한다.
+  - 파일 목록·설정값 확인처럼 파일 간 관계가 필요 없는 작업은 이 규칙의 대상이 아니다 — `git ls-files`·Read 로 바로 확인한다.
   - query 결과로 좁힌 뒤 전역 지형이 추가로 필요할 때만 `graphify-out/GRAPH_DIGEST.md`(top god nodes·hubs) → 필요 시 `GRAPH_REPORT.md` 순으로 본다.
   - 보조 명령: `graphify path "A" "B"`, `explain "X"`, `affected "X"`. 상세·예외는 .claude/rules/graphify-pipeline.md 참조
 - Navigate wiki/index.md (tag preface at top) to find relevant concepts; read raw files only when wiki is insufficient
