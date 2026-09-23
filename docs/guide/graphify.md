@@ -251,7 +251,7 @@ graphify는 아래 파일 형식을 모두 그래프 노드로 처리합니다.
 
 `CLAUDE.md`에는 두 가지 graphify 관련 규칙이 있습니다:
 
-**규칙 1**: 아키텍처·코드베이스·개념 질문 전에 `scripts/graphify-py.sh -m graphify query "<질문>" --budget 1500`을 먼저 실행합니다.
+**규칙 1**: 아키텍처·코드베이스·개념 질문 전에 `scripts/graphify-py.sh -m graphify query "<질문>" --budget 1500`을 먼저 실행합니다(파일 목록·설정값 확인은 제외).
 
 **규칙 2**: `.claude/settings.json`의 PreToolUse 훅이 Glob/Grep 호출 시 query-first 탐색을 자동 유도합니다.
 
@@ -309,7 +309,7 @@ cat graphify-out/cost.json
 
 ## 업스트림 레퍼런스
 
-이 프로젝트가 사용하는 graphify 상위 소스 (스킬 포크 기준 v0.8.39, MIT 라이선스, 2026-08-10 기준):
+이 프로젝트가 사용하는 graphify 상위 소스 (스킬 포크 기준 v0.9.40, MIT 라이선스, 2026-09-23 기준):
 
 | 링크 | 내용 |
 |---|---|

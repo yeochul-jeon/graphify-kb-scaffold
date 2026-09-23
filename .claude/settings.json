@@ -32,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -f graphify-out/graph.json ] && [ ! -f .work-log/.graphify-hint-seen ] && { mkdir -p .work-log && touch .work-log/.graphify-hint-seen && echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"graphify: for code/architecture/concept questions, run scripts/graphify-py.sh -m graphify query \\\"<question>\\\" --budget 1500 first; after query narrows sources, read wiki/index.md tag preface or GRAPH_DIGEST.md only when broader context is needed.\"}}'; } || true"
+            "command": "[ -f graphify-out/graph.json ] && [ ! -f .work-log/.graphify-hint-seen ] && { mkdir -p .work-log && touch .work-log/.graphify-hint-seen && echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"graphify: for code/architecture/concept questions, run scripts/graphify-py.sh -m graphify query \\\"<question>\\\" --budget 1500 first (not needed for file listings or config lookups — use git ls-files / Read directly); after query narrows sources, read wiki/index.md tag preface or GRAPH_DIGEST.md only when broader context is needed.\"}}'; } || true"
           }
         ]
       }

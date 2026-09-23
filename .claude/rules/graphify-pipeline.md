@@ -27,6 +27,7 @@ paths:
    scripts/graphify-py.sh -m graphify query "<질문>" --dfs --budget 800  # 특정 경로 추적
    ```
    - ⚠️ **GRAPH_DIGEST.md / GRAPH_REPORT.md / wiki 파일을 읽는 것은 query 명령 실행을 대체하지 않는다.** 첫 행동은 반드시 위 Bash `query` 명령이어야 한다 — 다이제스트 읽기로 시작하면 규칙 위반.
+   - 파일 목록·설정값 확인처럼 파일 간 관계가 필요 없는 작업은 이 단계의 대상이 아니다 — `git ls-files`·Read 로 바로 확인한다 (`AGENTS.md:8` 과 같은 범위).
    - 반환된 `[파일:줄:커뮤니티]` 포인터 중 **핵심 source_file 만 선택적으로 읽고** 답한다 (전체 wiki/raw 스캔 금지).
    - 두 개념 사이 관계: `graphify path "A" "B"`, 한 노드 이웃: `graphify explain "X"`, 역방향 영향: `graphify affected "X"`.
    - 근거: JIT 경량 식별자 패턴(Anthropic) + aider repo-map 그래프 랭킹과 동형. 실측 ~158x 토큰 절감.
