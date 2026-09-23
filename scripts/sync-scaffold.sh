@@ -93,6 +93,8 @@ SYNC_ITEMS=(
   "file:scripts/check-title-dup.py"
   "file:scripts/graphify-build.sh"
   "file:scripts/auto-graphify.sh"
+  # UserPromptSubmit 훅(.claude/settings.json)이 부른다 — 2026-09-16 신설.
+  "file:scripts/inject-current-time.sh"
   "file:scripts/clippings-inbox.sh"
   "file:scripts/save-checkpoint.sh"
   "file:scripts/wiki-dirty-flag.sh"

@@ -98,6 +98,17 @@
           }
         ]
       }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/inject-current-time.sh 2>/dev/null || true"
+          }
+        ]
+      }
     ]
   }
 }

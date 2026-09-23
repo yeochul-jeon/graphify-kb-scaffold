@@ -25,6 +25,11 @@ Rules:
 - 모델 배치는 작업 성격을 따른다 — 파일 위치 찾기·텍스트 추출은 haiku / 문면 대조·중복 검수·구조 점검은 sonnet / **측정 정의 판단·규칙 설계·원장 판정은 위임하지 않는다.**
 - ⚠️ **서브에이전트는 output style 을 상속하지 않는다** (fork 만 예외). 돌려받은 보고에는 이 저장소의 응답 규약(있다면 `.claude/output-styles/` 아래)이 걸려 있지 않으므로, **그 수치를 그대로 인용하지 말고 다시 잰다.**
 
+## 현재 시각
+
+- `UserPromptSubmit` 훅(`scripts/inject-current-time.sh`)이 매 턴 시작 시 "현재 시각(KST): ..." 를 컨텍스트에 주입한다. output 파일명(`YYYYMMDD-HHmm`)·frontmatter 날짜(`ingested_date`·`compiled_date` 등)가 필요하면 이 값을 쓰고 `Bash(date ...)` 를 다시 호출하지 않는다.
+- 훅이 없거나 값이 안 보이는 예외 상황(구버전 세션 등)에서만 `TZ=Asia/Seoul date +"%Y%m%d-%H%M"` 로 폴백한다.
+
 ## AI Memory Boundaries
 
 For memory-layer responsibilities, see `docs/guide/ai-memory-stack.md`. Keep this file focused on procedural rules.
