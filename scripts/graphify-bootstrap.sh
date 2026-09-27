@@ -3,8 +3,11 @@
 # SKILL.md Step 1 블록의 command_substitution을 Claude Code 밖에서 처리한다.
 #
 # 사용법: scripts/graphify-bootstrap.sh [INPUT_PATH]
+#         scripts/graphify-bootstrap.sh --root-stdin <<'EOF'   (경로는 heredoc 본문 1줄)
 #   INPUT_PATH 를 주면 graphify-out/.graphify_root 에 절대경로를 기록한다
 #   (인자 없는 `graphify update` 가 스캔 루트를 찾는 데 쓴다 — SKILL.md 0.8.39 Step 1 대응).
+#   --root-stdin 은 경로를 명령줄에 치환하지 않기 위한 형태다 — 경로의 `$(...)`·백틱이
+#   셸 코드로 실행되지 않는다 (upstream 0.9.68 #3742). 없는 경로면 exit 1.
 #
 # 설치 우선순위 (graphify 미발견 시):
 #   1. uv tool install graphifyy   (uv 있으면)
@@ -45,7 +48,16 @@ mkdir -p graphify-out
 echo "✓ Python 경로 기록 완료: $PYTHON" >&2
 
 # 스캔 루트 기록 (인자를 준 경우에만) — 인자 없는 `graphify update` 가 참조한다.
-if [ "$#" -ge 1 ] && [ -d "$1" ]; then
-    (cd "$1" && pwd) > graphify-out/.graphify_root
+if [ "${1:-}" = "--root-stdin" ]; then
+    ROOT=""
+    IFS= read -r ROOT || true
+    if [ -z "$ROOT" ] || [ ! -d "$ROOT" ]; then
+        echo "✗ --root-stdin: 디렉터리가 아닙니다: '$ROOT'" >&2
+        exit 1
+    fi
+    (cd -- "$ROOT" && pwd) > graphify-out/.graphify_root
+    echo "✓ 스캔 루트 기록 완료: $(cat graphify-out/.graphify_root)" >&2
+elif [ "$#" -ge 1 ] && [ -d "$1" ]; then
+    (cd -- "$1" && pwd) > graphify-out/.graphify_root
     echo "✓ 스캔 루트 기록 완료: $(cat graphify-out/.graphify_root)" >&2
 fi

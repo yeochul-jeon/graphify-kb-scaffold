@@ -70,10 +70,12 @@ Only when the path is one or more `https://github.com/...` URLs, or several loca
 > 래퍼는 upstream 과 동일하게 `graphify-out/.graphify_python` 과 `.graphify_root` 를 기록한다.
 
 ```bash
-bash scripts/graphify-bootstrap.sh INPUT_PATH
+bash scripts/graphify-bootstrap.sh --root-stdin <<'GRAPHIFY_ROOT_EOF'
+INPUT_PATH
+GRAPHIFY_ROOT_EOF
 ```
 
-Replace INPUT_PATH with the actual path the user provided.
+Replace INPUT_PATH with the actual path the user provided - only the heredoc body line, never the command line itself: a path substituted into the command line (even double-quoted) would let `$(...)` or backticks in it run as shell code (upstream 0.9.68 #3742). Keep the quoted `<<'GRAPHIFY_ROOT_EOF'` delimiter. The body is taken literally, so expand `~` yourself (write the absolute path).
 If the import succeeds, print nothing and move straight to Step 2.
 
 **In every subsequent bash block, replace `python3` with `scripts/graphify-py.sh` to use the correct interpreter.**

@@ -367,12 +367,16 @@ cat .claude/skills/graphify/.graphify_version   # 포크 기준 버전
 
 다르면 재포크한다 — upstream 원본을 가져와 **델타 3종만** 재적용:
 
-1. **Step 1 탐지 블록** → `bash scripts/graphify-bootstrap.sh INPUT_PATH` 한 줄.
+1. **Step 1 탐지 블록** → `bash scripts/graphify-bootstrap.sh --root-stdin` 에 경로를 quoted heredoc(`<<'GRAPHIFY_ROOT_EOF'`) 본문으로 넘기는 블록.
+   경로를 명령줄에 치환하지 않는다(upstream 0.9.68 #3742 와 같은 이유).
    Interpreter guard 블록도 `[ -f graphify-out/.graphify_python ] || bash scripts/graphify-bootstrap.sh`.
 2. **인터프리터 호출** → `$(cat graphify-out/.graphify_python)` 및 bare `python3` 을
    `scripts/graphify-py.sh` 로 치환.
 3. **잔여 `$(...)`** 제거 — `PROJECT_ROOT=$(cat ...)`, `LOCAL_PATH=$(graphify clone ...)` 처럼
    값을 셸 변수에 담는 곳은 "출력해서 읽고 직접 치환" 방식으로 바꾼다.
+   **예외** — `references/add-watch.md` 의 `"$(cat graphify-out/.graphify_root)"` 는 남긴다.
+   경로를 읽어 명령줄에 직접 치환하면 경로 속 `$(...)` 가 실행된다(upstream 0.9.68 #3742).
+   승인 프롬프트 1회를 보안과 바꾼 것이다(2026-09-28).
 
 > 델타의 목적은 하나다: `$(...)` command substitution 이 Claude Code 승인 프롬프트를
 > 유발하므로 치환을 스킬 밖(스크립트 내부)에서 처리한다.
