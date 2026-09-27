@@ -4,7 +4,8 @@
 이 파일에는 규칙 본문을 쓰지 않는다. 본문의 단일 원본은 AGENTS.md 이며 위 한 줄로 불러온다.
 
 왜 이 구조인가
-- Claude Code 는 `AGENTS.md` 를 직접 읽지 않고 `CLAUDE.md` 만 읽는다. 공식 문서가
+- `CLAUDE.md` 가 있으면 Claude Code 는 `AGENTS.md` 를 직접 읽지 않는다 (2.1.277 부터는
+  `CLAUDE.md` 가 없을 때만 대신 읽는다). 공식 문서가
   이 경우에 대해 "create a CLAUDE.md that imports it so both tools read the same
   instructions without duplicating them" 을 지시한다.
 - Codex CLI 는 `AGENTS.md` 를 읽는다.

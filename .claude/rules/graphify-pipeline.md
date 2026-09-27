@@ -10,10 +10,10 @@ paths:
 
 ## 직접 열지 말 것 (대용량·바이너리성)
 
-- `graphify-out/graph.json` (414 KB)
-- `graphify-out/graph.html` (326 KB)
+- `graphify-out/graph.json`
+- `graphify-out/graph.html`
 - `graphify-out/manifest.json`, `cost.json`
-- `graphify-out/cache/*.json` (147 파일, 652 KB) — **절대 금지**
+- `graphify-out/cache/**` — **절대 금지**
 - `graphify-out/_logs/*`
 
 > `.claudeignore` 는 Glob/Grep 결과를 차단하지 않으므로 **이 규칙으로 대체**.

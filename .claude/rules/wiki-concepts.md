@@ -136,7 +136,7 @@ scripts/graphify-py.sh scripts/attach-claim-metadata.py --apply    # 실제 쓰�
 
 > **`verified: false` 가 거의 전부인 것은 필드 고장이 아니다.** 사람 검토가 실제로 거의 이뤄지지 않았다는 **정확한 보고**다. 이 비율을 근거로 필드를 폐기하자는 제안이 2026-07-27 에 나왔으나, 폐기하면 "에이전트가 봤다" 와 "사람이 승인했다" 를 구분하는 유일한 신호가 사라진다. 비율을 고치고 싶으면 필드가 아니라 **승인 절차**를 만들어야 한다.
 
-**금지 조합**: `verified: true` + `last_verified: null` — 대조한 적 없는데 승인했다는 뜻이라 성립하지 않는다. 2026-07-27 에 `mattpocock-skills.md` 에서 필드 중복으로 실제 발생했다(`scripts/attach-claim-metadata.py:128-131`).
+**금지 조합**: `verified: true` + `last_verified: null` — 대조한 적 없는데 승인했다는 뜻이라 성립하지 않는다. 2026-07-27 에 `mattpocock-skills.md` 에서 필드 중복으로 실제 발생했다(`scripts/attach-claim-metadata.py` 「필드 단위로 검사하는 이유」 주석).
 
 #### 사람 승인 절차 (2026-07-27 신설)
 
