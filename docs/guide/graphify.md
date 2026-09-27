@@ -386,7 +386,8 @@ cat .claude/skills/graphify/.graphify_version   # 포크 기준 버전
 ```bash
 # ⚠️ 정본 graphify-kb 전용 — scripts/check-mirrors.py 가 없는 저장소에서는 이 블록을 실행하지 않는다
 grep -rn '\$(' .claude/skills/graphify/SKILL.md .claude/skills/graphify/references/*.md
-#   → 실행 블록 내 0건. 산문 설명(`$(...)` 표기)만 남아야 한다.
+#   → 실행 블록 내 1건만 정상: references/add-watch.md 의 "$(cat graphify-out/.graphify_root)"
+#      (델타 ③ 예외 — 경로를 명령줄에 치환하지 않기 위해 남긴다). 그 밖에는 산문 설명(`$(...)` 표기)만.
 grep -rn 'python3\|\$PYTHON' .claude/skills/graphify/SKILL.md .claude/skills/graphify/references/*.md
 #   → 2건만 정상: SKILL.md 의 치환 규약 설명 1건,
 #      references/exports.md 의 Claude Desktop MCP 설정 JSON 1건
