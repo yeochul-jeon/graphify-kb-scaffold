@@ -343,8 +343,8 @@ graphify 스킬은 **repo-local 사본만** 쓴다. 사용처 3곳은 각자 사
 ### 재발 이력과 방어선
 
 2026-04-16 커밋 `8093488` 이 전역 스킬·CLAUDE.md 블록을 제거했으나 6월에 되살아났다.
-원인 사슬: CLI 가 `install`/`uninstall`/`hook-check` 를 뺀 **모든 명령**에서 버전을 대조해
-`Run 'graphify install' to update` 경고를 띄운다(`__main__.py:2091`) → 프로젝트 규칙이
+원인 사슬: CLI 가 `install`/`uninstall`/`hook-check`/`hook-guard` 를 뺀 **모든 명령**에서 버전을 대조해
+`Run 'graphify install' to update` 경고를 띄운다(0.9.68 `__main__.py:594-600` `_silent_cmds`) → 프로젝트 규칙이
 강제하는 `graphify-build.sh`(내부적으로 `graphify update`)마다 경고가 뜸 → 지시대로 실행 → 전역 부활.
 
 방어선 3중:
