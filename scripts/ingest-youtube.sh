@@ -26,4 +26,17 @@ if [ -z "$VIDEO_ID" ]; then
 fi
 
 echo "video_id=${VIDEO_ID}" >&2
-uvx --from youtube-transcript-api youtube_transcript_api "$VIDEO_ID" --languages ko en --format text
+# 원어 우선: AI 더빙 트랙이 있는 영상은 더빙 음성마다 생성 자막이 생겨 `ko en` 만으로는 더빙 ASR 을 고른다.
+# 원어 조회 실패 시 orig_lang=unknown 을 알리고 종전 순서로 진행한다 (/ingest 가 note 에 「원어 미확인」 기록).
+ORIG=$(uvx --from yt-dlp yt-dlp --skip-download --no-warnings --print language "https://www.youtube.com/watch?v=${VIDEO_ID}" 2>/dev/null) || ORIG=""
+[ "$ORIG" = "NA" ] && ORIG=""
+echo "orig_lang=${ORIG:-unknown}" >&2
+# youtube_transcript_api CLI 는 자막을 못 받아도 exit 0 으로 에러문을 stdout 에 쓴다 — /ingest 의 실패 분기가 돌도록 여기서 exit 1 로 바꾼다.
+# 에러 문구 판별이 패키지 업데이트로 조용히 빗나가지 않도록 버전을 고정한다 (올릴 때 실패 문구를 다시 확인).
+OUT=$(uvx --from youtube-transcript-api==1.2.4 youtube_transcript_api "$VIDEO_ID" \
+  --languages ${ORIG:+"$ORIG" "${ORIG%%-*}"} ko en --format text)
+if ! [[ "$OUT" =~ [^[:space:]] ]] || [[ "$OUT" =~ ^[[:space:]]*Could\ not\ retrieve\ a\ transcript ]]; then
+  printf '%s\n' "$OUT" >&2
+  exit 1
+fi
+printf '%s\n' "$OUT"

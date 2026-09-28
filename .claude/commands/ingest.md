@@ -56,6 +56,7 @@ github_files: [README.md, docs/index.md, ...]
 
 1. `scripts/ingest-youtube.sh "<URL>"` 실행 (자막을 `youtube-transcript-api`로 직접 수집, 로그인/API 키 불필요)
 2. **성공 시** (종료 코드 0): stdout이 자막 전문(텍스트). 이를 본문으로 raw 파일 생성
+   - 자막은 영상 원어(stderr `orig_lang=`)를 1순위로 고른다. stderr 가 `orig_lang=unknown` 이면 원어 조회가 실패해 `ko en` 순서로 골랐다는 뜻이다 — frontmatter `note` 에 「원어 미확인」을 적는다 (AI 더빙 영상이면 더빙 음성의 전사일 수 있다)
 3. **실패 시** (종료 코드 0이 아님, 예: 자막 비활성·비공개 영상): 기존 방식대로 스텁 생성
    - 본문: 영상 제목(추정 가능하면) + URL만 기록, `<!-- 자막 수집 실패: 수동 입력 필요 -->` 주석 추가
    - 사용자에게 자막 수동 입력 또는 요약 붙여넣기 가능 여부 확인
