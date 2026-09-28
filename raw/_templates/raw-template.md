@@ -25,6 +25,8 @@ published: YYYY-MM-DD     # 선택 — 원문 발행일. ingested_date 와 다�
 #   · 수집 범위가 URL 이 가리키는 것의 일부일 때 → 무엇을 못 담았는지, 전문이 필요하면 어디로
 #     가야 하는지. verbatim 은 '저장한 것' 에 대한 주장이므로 그 대상 범위를 여기서 못박는다
 #   · 핀 없는 http 출처      → 대조일과 '오늘 판' 임을 명시
+#   · images: 에 화면 보조 수집 프레임이 있을 때 → 프레임별로 읽은 사실. compile 은 raw/attachments/ 를
+#     열지 못한다 (.claude/commands/ingest.md §화면 보조 수집)
 #   해당 없으면 아래 두 줄을 지운다. 여러 줄이면 아래처럼 블록 스칼라(|) 를 쓴다.
 #   ⚠️ | 아래의 # 는 주석이 아니라 값이다. 안내를 그 안에 남기지 말 것.
 #   규격: .claude/rules/raw-ingest.md §verbatim · §핀이 없는 출처

@@ -61,6 +61,31 @@ github_files: [README.md, docs/index.md, ...]
    - 본문: 영상 제목(추정 가능하면) + URL만 기록, `<!-- 자막 수집 실패: 수동 입력 필요 -->` 주석 추가
    - 사용자에게 자막 수동 입력 또는 요약 붙여넣기 가능 여부 확인
 
+#### 화면 보조 수집 (claude-video, 선택)
+
+**언제**: 전사만으로는 내용이 닫히지 않는 영상 — 발표자가 슬라이드·화면을 가리키며 말하거나(«as you can see», «이 슬라이드», «여기 보시면»),
+고유명사·경로·수치가 화면에만 있을 때. 수집자가 판단하고 그 이유를 `note` 에 적는다.
+
+**전제**: claude-video 가 설치된 PC 에서만. `WATCH=$(find ~/.claude/plugins/cache/claude-video/watch -maxdepth 5 -name watch.py 2>/dev/null | sort | tail -1)`
+가 비면 이 절을 건너뛴다 — 수집 실패가 아니다(`ls <glob>` 은 zsh 에서 미설치 시 `no matches found` 를 출력하므로 `find` 를 쓴다). `/watch` 스킬이 아니라 스크립트를 직접 부른다(스킬의 설정 마법사·엔진 안내가 끼어들지 않게).
+URL 은 항상 `"<URL>"` 로 따옴표를 친다 — zsh 는 `?` 를 glob 으로 읽어 `no matches found` 로 멈춘다.
+
+1. 전사는 위 1~3 그대로 `ingest-youtube.sh` 로 받는다. claude-video 의 전사를 raw 본문에 넣지 않는다. 3번(스텁)이어도 이 절은 적용할 수 있다 — `orig_lang=` 은 실패 시에도 stderr 에 먼저 찍힌다
+2. 시각 찾기: `python3 "$WATCH" "<URL>" --engine local --detail transcript --sub-lang <기본형> --out-dir <scratchpad>`
+   - `<기본형>` 은 `ingest-youtube.sh` stderr `orig_lang=` 값의 하이픈 앞부분이다 — 예: `en-US` → `en`, `ko` → `ko`.
+     `en-US` 를 그대로 넘기면 트랙이 매치되지 않는다. `orig_lang=unknown` 이면 이 절을 건너뛴다
+   - 성공 판정은 exit code 가 아니라 보고서 `Transcript:` 줄로 한다 — 자막을 못 받아도 exit 0 이 나온다
+     - `Transcript:` 줄이 `<기본형>` 이 아닌 언어의 자막이면 멈추고 보고한다
+     - `no captions available`(예: stderr `HTTP Error 429`) 이면 `--detail transcript` 대신 `--detail efficient` 로 영상 전체를 한 번 돌려 프레임 시각에서 구간을 찾는다.
+       자막 요청이 막혀도 프레임 추출은 된다. `ingest-youtube.sh` 전사는 `--format text` 라 시각이 없다.
+       이 실행은 `--sub-lang` 없이 돌므로 보고서 전사가 다른 언어일 수 있다 — 프레임 시각만 쓰고 전사는 무시한다
+3. 구간 추출: `python3 "$WATCH" "<URL>" --engine local --start <MM:SS> --end <MM:SS> --resolution 1024 --out-dir <scratchpad>`
+4. `<scratchpad>` 의 프레임을 보고, **근거로 남길 사실이 담긴 프레임만** `raw/attachments/youtube-<id>/frame-<MMSS>-<NN>.jpg` 로 복사한다
+   (`NN` 은 claude-video 프레임 번호 끝 두 자리 — 같은 초에 여러 장이 나온다. 번호는 실행마다 1부터 다시 매겨지므로 이미 같은 이름이 있으면 복사하지 않는다)
+5. 프레임에서 읽은 사실은 **지금** frontmatter `note` 에 프레임별로 적는다 — compile 은 `raw/attachments/` 를 열지 못한다(`.claudeignore`).
+   버전은 `$WATCH` 경로의 `watch/<버전>/` 에서 읽는다. 예: `화면 보조 수집(claude-video 0.3.2 local, 2026-09-28): frame-0651-01.jpg t=06:51 슬라이드 08 «Retrieval quality changes answer accuracy.» 55.9% / 70.1% / 93%`
+6. `images:` 에 복사한 프레임을 raw 기준 상대경로로 적는다 — 예: `images: [attachments/youtube-<id>/frame-0651-01.jpg]`. raw 본문(전사)은 고치지 않는다
+
 **파일명 규칙**: `youtube-[video_id].md` (제목 kebab-case 규칙의 예외 — 자막 API로 영상 제목을 얻을 수 없어 ID 기반 고정)
 **frontmatter `source_url`**: 원본 시청 URL 전체
 
