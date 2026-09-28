@@ -71,12 +71,16 @@ github_files: [README.md, docs/index.md, ...]
 URL 은 항상 `"<URL>"` 로 따옴표를 친다 — zsh 는 `?` 를 glob 으로 읽어 `no matches found` 로 멈춘다.
 
 1. 전사는 위 1~3 그대로 `ingest-youtube.sh` 로 받는다. claude-video 의 전사를 raw 본문에 넣지 않는다. 3번(스텁)이어도 이 절은 적용할 수 있다 — `orig_lang=` 은 실패 시에도 stderr 에 먼저 찍힌다
-2. 시각 찾기: `python3 "$WATCH" "<URL>" --engine local --detail transcript --sub-lang <기본형> --out-dir <scratchpad>`
-   - `<기본형>` 은 `ingest-youtube.sh` stderr `orig_lang=` 값의 하이픈 앞부분이다 — 예: `en-US` → `en`, `ko` → `ko`.
+2. 시각 찾기: `python3 "$WATCH" "<URL>" --engine local --detail transcript --sub-lang <기본형>-orig --out-dir <scratchpad>`
+   - `<기본형>` 은 `ingest-youtube.sh` stderr `orig_lang=` 값의 하이픈 앞부분이다 — 예: `en-US` → 기본형 `en` → 넘기는 값 `en-orig`, `ko` → `ko-orig`.
      `en-US` 를 그대로 넘기면 트랙이 매치되지 않는다. `orig_lang=unknown` 이면 이 절을 건너뛴다
+   - `-orig` 를 붙이는 이유: `--sub-lang en` 은 수동 자막 `en` 이 없으면 자동 자막 중 **번역** 트랙 `en` 을 `en-orig` 보다 먼저 고르는데(claude-video `download.py` `select_caption`),
+     번역 트랙은 `HTTP Error 429` 로 막혔다(2026-09-28~29, `--sub-lang en` 7회 전부 · yt-dlp 직접 `en`·`ar` 각 1회). 원어 자동 자막 `en-orig` 는 같은 시각에 받아졌다.
+     `-orig` 값은 자동 자막 `<기본형>-orig` 와 정확히 일치하는 트랙만 고른다 — 수동 자막이 있어도 1차는 자동 원어 자막이다(시각 찾기에는 충분하다)
    - 성공 판정은 exit code 가 아니라 보고서 `Transcript:` 줄로 한다 — 자막을 못 받아도 exit 0 이 나온다
      - `Transcript:` 줄이 `<기본형>` 이 아닌 언어의 자막이면 멈추고 보고한다
-     - `no captions available`(예: stderr `HTTP Error 429`) 이면 `--detail transcript` 대신 `--detail efficient` 로 영상 전체를 한 번 돌려 프레임 시각에서 구간을 찾는다.
+     - ① `no captions available` 이면 `--sub-lang <기본형>` 으로 한 번 더 돌린다 — `-orig` 트랙이 없거나 수동 자막만 있는 영상이다. 이때는 stderr 에 429 가 없을 수 있다
+     - ② 그래도 `no captions available`(예: stderr `HTTP Error 429`) 이면 `--detail transcript` 대신 `--detail efficient` 로 영상 전체를 한 번 돌려 프레임 시각에서 구간을 찾는다.
        자막 요청이 막혀도 프레임 추출은 된다. `ingest-youtube.sh` 전사는 `--format text` 라 시각이 없다.
        이 실행은 `--sub-lang` 없이 돌므로 보고서 전사가 다른 언어일 수 있다 — 프레임 시각만 쓰고 전사는 무시한다
 3. 구간 추출: `python3 "$WATCH" "<URL>" --engine local --start <MM:SS> --end <MM:SS> --resolution 1024 --out-dir <scratchpad>`
