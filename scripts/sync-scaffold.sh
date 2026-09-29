@@ -100,6 +100,8 @@ SYNC_ITEMS=(
   "file:scripts/wiki-dirty-flag.sh"
   "file:scripts/ingest-fetch.sh"
   "file:scripts/ingest-youtube.sh"
+  # .claude/commands/ingest.md §이미지 핸들링 5항이 부른다 — 2026-09-29 신설(원장 #103).
+  "file:scripts/extract-inline-images.py"
   # `dir:scripts` 로 뭉치지 않는다 — --delete 가 scaffold 전용 regen-graphify-skill.sh 를 지운다.
   # scripts/check-mirrors.py 는 **의도적으로 넣지 않는다** (2026-08-19).
   #   그 검사는 `.agents/`·`.codex/` 아래 파일 전건이 매핑표에 청구되기를 요구하는데,

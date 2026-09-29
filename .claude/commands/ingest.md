@@ -193,7 +193,9 @@ scripts/graphify-py.sh scripts/check-title-dup.py --new raw/<새파일>.md
    - 변환 전: `![alt](https://example.com/image.png)`
    - 변환 후: `![alt](attachments/article-name/image.png)`
 4. **다운로드 실패 시**: 원본 URL 유지 + 주석 추가 `<!-- 이미지 다운로드 실패: URL -->`
-5. **이미지 없는 자료**: attachments 디렉토리 미생성
+   - 🔴 **단, 실패 URL 이 `blob:http://localhost/…` 이면 4번으로 내려가지 않고 5번을 먼저 한다.**
+5. **`blob:` 이미지 (jina-reader 변환 결과)**: 본문에 `![…](blob:http://localhost/…)` 줄이 있거나, 캡션(`그림 N.`)은 있는데 이미지 줄이 없으면 그 blob 은 실제 이미지가 아니라 **변환 산출물**이다 — 원문 HTML 에는 `data:image/…;base64` 로 들어 있다. `python3 scripts/extract-inline-images.py <원문 URL> <raw 슬러그>` (dry-run) 로 개수·캡션 정합을 확인한 뒤 `--apply` 한다. 이미지 0개이거나 캡션 수가 어긋나면 스크립트가 멈춘다 — 그때만 4번으로 내려간다. `note:` 에 blob 이 나왔던 사실과 복원 사실을 적는다. (2026-09-29 실측: 삼성 기술 블로그 raw 6건이 이 경로로 이미지를 잃은 채 «실제 이미지 파일이 아님» 으로 기록돼 있었다 — 원장 #103)
+6. **이미지 없는 자료**: attachments 디렉토리 미생성
 
 ### YAML Frontmatter 추가
 
