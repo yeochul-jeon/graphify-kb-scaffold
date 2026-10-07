@@ -497,7 +497,15 @@ Generated Source Ledger shape (실제 컬럼 — `scripts/generate-source-ledger
 ### Source Ledger
 - `wiki/_meta/source-ledger.md`: 없음
 - `concepts/example.md`: `sources` 필드 누락
+
+## 이번 회차에 조치한 것 (자기 산출물)
+- A · `concepts/example.md` §핵심 내용 둘째 불릿 «설정한다» · raw:172 · 원문 «설정할 수 있습니다»로 가능형 복원
+- E · `concepts/example.md` §개요 · `:53-54` → `:54-55` · 문장 끝 줄 누락
 ```
+
+- **«이번 회차에 조치한 것» 절**: 같은 세션 `/compile` Step 3.6 충실도 감사의 지적을 **한 건에 목록 한 줄**로, 유형 코드(A~H, `docs/guide/compile-audit-standards.md`)를 앞에 붙여 적는다. 이 세션에 감사가 없었으면 절을 생략한다
+  - 컴파일 감사 retro 가 이 제목 줄(`## 이번 회차에 조치한 것`)부터 다음 `## ` 까지의 목록 줄(`- `·`1. `)을 추출한다. 제목 문자열을 바꾸거나 지적을 평문 단락으로 쓰면 추출에서 빠진다
+  - lint 가 직접 고친 구조 조치(island 링크·index 동기화 등)를 같은 절에 적어도 되지만, 감사 지적과 섞어 한 줄에 쓰지 않는다
 
 ### 작업 로그 업데이트
 

@@ -31,12 +31,27 @@ echo "video_id=${VIDEO_ID}" >&2
 ORIG=$(uvx --from yt-dlp yt-dlp --skip-download --no-warnings --print language "https://www.youtube.com/watch?v=${VIDEO_ID}" 2>/dev/null) || ORIG=""
 [ "$ORIG" = "NA" ] && ORIG=""
 echo "orig_lang=${ORIG:-unknown}" >&2
+# 후보(원어 → 원어 하이픈 앞부분 → ko → en)를 하나씩 시도해 실제로 받은 코드를 transcript_lang= 으로 알린다.
+# 원어 표시 언어의 ASR 이 없는 영상(업로더가 원본 오디오를 실제 발화와 다른 언어로 표시 — wi3tZ-c48YU)은 orig_asr=missing 을 함께 찍는다.
+# 다음 후보로 넘어가는 것은 «그 언어 자막 없음»(NoTranscriptFound)일 때만이다 — 429·IP 차단 같은 실패까지 넘기면 orig_asr=missing 으로 오표시된다.
 # youtube_transcript_api CLI 는 자막을 못 받아도 exit 0 으로 에러문을 stdout 에 쓴다 — /ingest 의 실패 분기가 돌도록 여기서 exit 1 로 바꾼다.
 # 에러 문구 판별이 패키지 업데이트로 조용히 빗나가지 않도록 버전을 고정한다 (올릴 때 실패 문구를 다시 확인).
-OUT=$(uvx --from youtube-transcript-api==1.2.4 youtube_transcript_api "$VIDEO_ID" \
-  --languages ${ORIG:+"$ORIG" "${ORIG%%-*}"} ko en --format text)
+# `--` 뒤에 id 를 둔다 — `-` 로 시작하는 id 가 옵션으로 읽히지 않게.
+CANDS=""
+for L in ${ORIG:+"$ORIG" "${ORIG%%-*}"} ko en; do
+  case " $CANDS " in *" $L "*) ;; *) CANDS="$CANDS $L" ;; esac
+done
+for L in $CANDS; do
+  OUT=$(uvx --from youtube-transcript-api==1.2.4 youtube_transcript_api \
+    --languages "$L" --format text -- "$VIDEO_ID")
+  [[ "$OUT" =~ ^[[:space:]]*Could\ not\ retrieve\ a\ transcript && "$OUT" =~ No\ transcripts\ were\ found\ for\ any\ of\ the\ requested\ language\ codes ]] || break
+done
 if ! [[ "$OUT" =~ [^[:space:]] ]] || [[ "$OUT" =~ ^[[:space:]]*Could\ not\ retrieve\ a\ transcript ]]; then
   printf '%s\n' "$OUT" >&2
   exit 1
+fi
+echo "transcript_lang=${L}" >&2
+if [ -n "$ORIG" ] && [ "$L" != "$ORIG" ] && [ "$L" != "${ORIG%%-*}" ]; then
+  echo "orig_asr=missing" >&2
 fi
 printf '%s\n' "$OUT"

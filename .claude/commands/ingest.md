@@ -56,7 +56,8 @@ github_files: [README.md, docs/index.md, ...]
 
 1. `scripts/ingest-youtube.sh "<URL>"` 실행 (자막을 `youtube-transcript-api`로 직접 수집, 로그인/API 키 불필요)
 2. **성공 시** (종료 코드 0): stdout이 자막 전문(텍스트). 이를 본문으로 raw 파일 생성
-   - 자막은 영상 원어(stderr `orig_lang=`)를 1순위로 고른다. stderr 가 `orig_lang=unknown` 이면 원어 조회가 실패해 `ko en` 순서로 골랐다는 뜻이다 — frontmatter `note` 에 「원어 미확인」을 적는다 (AI 더빙 영상이면 더빙 음성의 전사일 수 있다)
+   - 자막은 영상 원어(stderr `orig_lang=`)를 1순위로 고르고, 실제로 받은 자막 코드를 stderr `transcript_lang=` 으로 알린다. stderr 가 `orig_lang=unknown` 이면 원어 조회가 실패해 `ko en` 순서로 골랐다는 뜻이다 — frontmatter `note` 에 「원어 미확인」을 적는다 (AI 더빙 영상이면 더빙 음성의 전사일 수 있다)
+   - stderr 에 `orig_asr=missing` 이 있으면 원어 표시 언어의 자막 트랙(수동·자동 모두 — 코드가 `orig_lang=` 값 또는 그 하이픈 앞부분과 정확히 같은 것)이 없어 다른 언어 트랙을 받았다는 뜻이다 — `note` 에 `원어(<orig_lang>) ASR 없음 — 받은 트랙 <transcript_lang>` 을 적는다. 업로더가 원본 오디오를 실제 발화와 다른 언어로 표시한 영상(예: `wi3tZ-c48YU` — `ko` 표시, 영어 발화)에서 나온다. 받은 트랙이 실제 발화의 인식인지 더빙 음성의 인식인지는 이 키로 가릴 수 없다. 반대로 이 키가 없어도 받은 트랙이 자동 자막이라는 보장은 없다(수동 자막이 먼저 골라진다)
 3. **실패 시** (종료 코드 0이 아님, 예: 자막 비활성·비공개 영상): 기존 방식대로 스텁 생성
    - 본문: 영상 제목(추정 가능하면) + URL만 기록, `<!-- 자막 수집 실패: 수동 입력 필요 -->` 주석 추가
    - 사용자에게 자막 수동 입력 또는 요약 붙여넣기 가능 여부 확인
@@ -70,6 +71,18 @@ github_files: [README.md, docs/index.md, ...]
 가 비면 이 절을 건너뛴다 — 수집 실패가 아니다(`ls <glob>` 은 zsh 에서 미설치 시 `no matches found` 를 출력하므로 `find` 를 쓴다). `/watch` 스킬이 아니라 스크립트를 직접 부른다(스킬의 설정 마법사·엔진 안내가 끼어들지 않게).
 URL 은 항상 `"<URL>"` 로 따옴표를 친다 — zsh 는 `?` 를 glob 으로 읽어 `no matches found` 로 멈춘다.
 
+**구간 선정** (전제를 통과한 뒤, 아래 1단계로 raw 를 만든 직후 2단계와 함께): raw 본문(frontmatter 제외)에서 화면 지시 표현이 있는 줄을 줄번호와 함께 뽑는다.
+```bash
+P='그림과 같|그림에서|오른쪽|왼쪽|아래 그래프|아래 그림|보시는|보이시는|화면|슬라이드|as you can see|this slide|on the screen|looks like this|here we have|you can see'
+awk '/^---$/{n++;next} n>=2{print FNR": "$0}' raw/youtube-<id>.md | grep -iE "$P"
+```
+- 가리키는 대상은 다음 줄에 이어지는 경우가 많다(«…컨슈하고 오른쪽 / 코드처럼»). 각 줄을 `sed -n <N-3>,<N+3>p` 로 열어 무엇을 가리키는지 본다
+- 글자·수치·코드·표가 있을 것으로 보이는 대상은 모두 추출 대상에 넣는다. 넣지 않아도 되는 것은 **읽을 글자가 없는** 그림(사진·로고만 있는 화면)뿐이다 — 도식이라도 이름·수치가 적혀 있을 수 있어 «언제»의 고유명사·수치 조건에 걸린다. 확신이 없으면 프레임을 뽑아 보고 정한다(토스 영상에서 «도식»으로 보고 뺐던 구간이 필드 표였다)
+- 줄 → 시각: 그 줄의 문구를 2단계 `--detail transcript` 출력에서 찾아 시각을 얻는다. 3단계 구간은 그 시각 5초 전부터 20초 정도로 잡고, 슬라이드가 바뀌는 지점이 근처면 넓힌다. 2단계가 `--detail efficient` 폴백이면 전사 시각이 없으므로 프레임 시각을 보고 해당 슬라이드 구간을 잡는다
+- grep 결과가 0줄이면(«다음 표», «이 그래프» 처럼 패턴 밖 표현) 위 «언제»의 판단으로 돌아가 전사를 읽고 구간을 직접 고른다
+- 넣지 않은 지시 줄은 `note` 에 `미추출 구간: 줄 N(«<지시 문구>» — <넣지 않은 이유>)` 형식으로 남긴다. `note` 를 늘리면 본문 줄번호가 밀리므로, 이 줄번호는 `note` 를 다 쓴 뒤 같은 명령을 다시 돌려 얻은 값을 적는다
+- 🔴 **이미 컴파일된 raw**(`compiled: true`)에 나중에 이 절을 적용하면, 늘어난 `note` 줄 수 k 만큼 그 raw 를 `:N` 으로 인용하는 위키 페이지의 줄번호가 모두 밀린다. 인용을 일괄 +k 하고, 보정 전 raw 와 보정 후 raw 에서 같은 범위의 내용이 같은지 스크립트로 대조한다. 그 페이지 §출처의 대조 범위 줄에 «줄번호 +k 보정(날짜)» 을 적는다
+
 1. 전사는 위 1~3 그대로 `ingest-youtube.sh` 로 받는다. claude-video 의 전사를 raw 본문에 넣지 않는다. 3번(스텁)이어도 이 절은 적용할 수 있다 — `orig_lang=` 은 실패 시에도 stderr 에 먼저 찍힌다
 2. 시각 찾기 — 원어 자막 트랙 이름을 목록에서 그대로 가져와 넘긴다:
    ```bash
@@ -78,7 +91,7 @@ URL 은 항상 `"<URL>"` 로 따옴표를 친다 — zsh 는 `?` 를 glob 으로
      | grep -E "^<기본형>(-[A-Za-z]+)*-orig\$" | head -1)
    python3 "$WATCH" "<URL>" --engine local --detail transcript --sub-lang "${ORIG_TRACK:-<기본형>}" --out-dir <scratchpad>
    ```
-   - `<기본형>` 은 `ingest-youtube.sh` stderr `orig_lang=` 값의 하이픈 앞부분이다(`en-US` → `en`). `orig_lang=unknown` 이면 이 절을 건너뛴다
+   - `orig_lang=unknown` 이면 이 절을 건너뛴다(`transcript_lang=` 이 찍혔어도 — 원어를 모르면 `-orig` 트랙을 고를 근거가 없다). 그 밖에는 `<기본형>` 이 `ingest-youtube.sh` stderr `transcript_lang=` 값의 하이픈 앞부분이다(`en-US` → `en`). 보통 `orig_lang=` 과 같고, `orig_asr=missing` 인 영상에서는 원어 표시 언어의 `-orig` 트랙이 없으므로 실제로 받은 언어로 찾아야 한다. 자막 수집이 실패해(3번 스텁) `transcript_lang=` 이 없으면 `orig_lang=` 값의 하이픈 앞부분을 쓴다
    - 트랙 이름은 짐작하지 않는다 — `orig_lang=en-US` 인 영상의 원어 트랙이 `en-orig` 이기도 하고(`fZH97QHHYjY`), 다른 영상의 영어 원어 트랙은 `en-US-orig` 다(`lbRdRKU93EA`).
      `--sub-lang` 에 `-` 가 든 값은 정확히 일치하는 트랙만 고르므로 `en-orig` 로는 `en-US-orig` 를 못 받는다(2026-09-29 실측)
    - `-orig` 를 쓰는 이유: `--sub-lang en` 은 수동 자막 `en` 이 없으면 자동 자막 중 **번역** 트랙 `en` 을 원어 트랙보다 먼저 고르는데(claude-video `download.py` `select_caption`),
