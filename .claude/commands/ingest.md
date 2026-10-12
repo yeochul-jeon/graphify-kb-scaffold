@@ -203,6 +203,7 @@ scripts/graphify-py.sh scripts/check-title-dup.py --new raw/<새파일>.md
 2. **이미지 다운로드**: 본문에 포함된 이미지 URL을 `curl`로 로컬 다운로드
    - 파일명: 원본 파일명 유지, 불명확하면 `img-01.png`, `img-02.png` 순번
    - 지원 형식: `.png`, `.jpg`, `.jpeg`, `.gif`, `.svg`, `.webp`
+   - **2 MB 를 넘는 GIF 는 받지 않는다.** 원본 URL 을 그대로 두고(GitHub 출처면 `github_ref` SHA 로 고정한 raw URL) 같은 줄 끝에 `<!-- 이미지 크기 때문에 받지 않음: <파일명> <크기> MB, 원본 URL 유지 -->` 를 붙인다. `images:` 에 넣지 않고 `note:` 에 파일명과 바이트 수를 적는다. 크기는 받기 전에 `curl -sI <URL>` 의 `content-length` 로 확인한다. 이미 커밋한 파일을 나중에 빼도 git 이력에 남아 저장소 크기는 줄지 않는다 — 이 판정은 수집 시점에 한다 (2026-10-12, `raw/hamzafer-claude-code-mods.md` 의 9.0 MB·3.3 MB GIF 2개)
 3. **마크다운 참조 변환**: 원본 URL을 상대 경로로 교체
    - 변환 전: `![alt](https://example.com/image.png)`
    - 변환 후: `![alt](attachments/article-name/image.png)`
