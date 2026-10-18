@@ -381,7 +381,8 @@ review_due: <승인일 + 30일>     # 기존 관행
 
 - 새 concept 추가/삭제 시 **`wiki/index.md` 표와 태그 프리페이스 둘 다 갱신**
 - `wiki/backlinks.md` 자동 생성 파일이지만 수동 수정은 금지 — `scripts/graphify-py.sh scripts/rebuild-backlinks.py` (결정론적 strict-inbound, `graphify-build.sh`·`/lint --fix`에 내장) 로 재생성
-- 커밋 시 `ALLOW_WIKI_EDIT=1 git commit` 필요 (pre-commit 훅 우회)
+- Claude Code 세션(환경변수 `CLAUDECODE=1`, `CI` 미설정)의 커밋은 pre-commit 훅이 staged `wiki/` 목록만 출력하고 통과시킨다 — 우회가 필요 없다. 사유는 커밋 메시지에 남긴다 (2026-10-19, `3cf05712`)
+- 그 밖의 비대화형 환경(Codex 등)에서는 커밋 시 `ALLOW_WIKI_EDIT=1 git commit` 필요 (pre-commit 훅 우회)
 - **사유도 함께 넘긴다**: `ALLOW_WIKI_EDIT_REASON="<왜 우회하는가>"`. 훅이 이 값을 그대로 출력하며(`.githooks/pre-commit:10`), 비우면 `bypassed: no reason provided` 가 로그에 남는다 — OT-6 으로 여러 회차 이월된 항목의 실체가 **변수 존재를 몰라서**였다
 
 ```bash

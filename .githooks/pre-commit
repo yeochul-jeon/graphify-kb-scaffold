@@ -2,7 +2,8 @@
 # wiki/ 오염 방지 가드
 # wiki/ 파일이 staged된 경우 경고를 출력합니다.
 #
-# 우회 방법 (Claude Code 커밋 등 의도적 수정 시):
+# Claude Code 세션(CLAUDECODE=1, CI 아님)은 우회 없이 통과한다.
+# 그 밖의 비대화형 환경에서 의도적으로 수정할 때 우회 방법:
 #   ALLOW_WIKI_EDIT=1 ALLOW_WIKI_EDIT_REASON="<왜 우회하는가>" git commit -m "..."
 # 사유는 의무다 (.claude/rules/wiki-concepts.md §연동 의무).
 
@@ -16,6 +17,13 @@ fi
 WIKI_STAGED=$(git diff --cached --name-only | grep "^wiki/" | grep -v "^wiki/_meta/" | grep "\.md$")
 
 if [ -z "$WIKI_STAGED" ]; then
+  exit 0
+fi
+
+# Claude Code 세션(CLAUDECODE=1)은 통과. 사유는 커밋 메시지에 남긴다. CI 는 아래에서 막는다.
+if [ -z "$CI" ] && [ "${CLAUDECODE}" = "1" ]; then
+  echo "[wiki guard] Claude Code session (CLAUDECODE=1): wiki/ files staged:"
+  echo "$WIKI_STAGED" | sed 's/^/  - /'
   exit 0
 fi
 
