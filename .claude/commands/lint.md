@@ -164,9 +164,9 @@ scripts/graphify-py.sh scripts/check-source-section.py --check --verbose
 TODAY=$(date '+%Y-%m-%d')
 # 값 추출은 키 뒤 공백 수와 무관해야 한다. `sed 's/key: //'` 는 `: ` 두 글자가 없으면
 # 치환하지 않아 값 없는 키에서 **키 문자열 자체**를 값으로 돌려준다 (원장 #36).
-fmval() { sed -n "s/^$2:[[:space:]]*//p" "$1" | head -1; }
+fmval() { sed -n "s/^${2}:[[:space:]]*//p" "${1}" | head -1; }
 # "값 없음" 은 null 하나가 아니다 — 빈 문자열·''·"" 를 모두 포함해야 한다.
-isnull() { case "$1" in ''|null|"''"|'""') return 0 ;; *) return 1 ;; esac; }
+isnull() { case "${1}" in ''|null|"''"|'""') return 0 ;; *) return 1 ;; esac; }
 for f in wiki/concepts/*.md wiki/topics/*.md; do
   v=$(fmval "$f" verified); l=$(fmval "$f" last_verified); d=$(fmval "$f" review_due)
   [[ "$v" == "false" ]] && ! isnull "$l" && echo "(a) 승인대기: $f"

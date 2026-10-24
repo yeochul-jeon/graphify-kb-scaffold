@@ -74,7 +74,7 @@ URL 은 항상 `"<URL>"` 로 따옴표를 친다 — zsh 는 `?` 를 glob 으로
 **구간 선정** (전제를 통과한 뒤, 아래 1단계로 raw 를 만든 직후 2단계와 함께): raw 본문(frontmatter 제외)에서 화면 지시 표현이 있는 줄을 줄번호와 함께 뽑는다.
 ```bash
 P='그림과 같|그림에서|오른쪽|왼쪽|아래 그래프|아래 그림|보시는|보이시는|화면|슬라이드|as you can see|this slide|on the screen|looks like this|here we have|you can see'
-awk '/^---$/{n++;next} n>=2{print FNR": "$0}' raw/youtube-<id>.md | grep -iE "$P"
+awk '/^---$/{n++;next} n>=2{print FNR": "$(0)}' raw/youtube-<id>.md | grep -iE "$P"
 ```
 - 가리키는 대상은 다음 줄에 이어지는 경우가 많다(«…컨슈하고 오른쪽 / 코드처럼»). 각 줄을 `sed -n <N-3>,<N+3>p` 로 열어 무엇을 가리키는지 본다
 - 글자·수치·코드·표가 있을 것으로 보이는 대상은 모두 추출 대상에 넣는다. 넣지 않아도 되는 것은 **읽을 글자가 없는** 그림(사진·로고만 있는 화면)뿐이다 — 도식이라도 이름·수치가 적혀 있을 수 있어 «언제»의 고유명사·수치 조건에 걸린다. 확신이 없으면 프레임을 뽑아 보고 정한다(토스 영상에서 «도식»으로 보고 뺐던 구간이 필드 표였다)
@@ -88,7 +88,7 @@ awk '/^---$/{n++;next} n>=2{print FNR": "$0}' raw/youtube-<id>.md | grep -iE "$P
 2. 시각 찾기 — 원어 자막 트랙 이름을 목록에서 그대로 가져와 넘긴다:
    ```bash
    ORIG_TRACK=$(yt-dlp --list-subs "<URL>" 2>/dev/null \
-     | awk '/^\[info\] Available automatic captions/{a=1;next} /^\[info\] Available subtitles/{a=0} a{print $1}' \
+     | awk '/^\[info\] Available automatic captions/{a=1;next} /^\[info\] Available subtitles/{a=0} a{print $(1)}' \
      | grep -E "^<기본형>(-[A-Za-z]+)*-orig\$" | head -1)
    python3 "$WATCH" "<URL>" --engine local --detail transcript --sub-lang "${ORIG_TRACK:-<기본형>}" --out-dir <scratchpad>
    ```
