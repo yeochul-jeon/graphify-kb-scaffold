@@ -81,6 +81,18 @@ ENUM_SECTION_RE = re.compile(r"^###\s+.*열거값")
 ENUM_LABEL_RE = re.compile(r"^\*\*`(" + "|".join(ENUM_FIELDS) + r")`")
 ENUM_ROW_RE = re.compile(r"^\|\s*`([a-z_]+)`\s*\|")
 
+# 「노드 0 md」 판정 범위 (계획 `docs/plan/plans/2026-10-25-graphify-paper-misclassification.md` T3).
+# 양의 정의다 — `raw/**`·`wiki/concepts`·`wiki/topics` 에서 아래 제외 경로를 뺀다.
+# ⚠️ `raw/Clippings/`·`private`·`company`·`medical`·`finance` 5종은 `.graphifyignore:4,7-10` 의
+#    사본이다. 그 파일을 파싱하지 않으므로 **`.graphifyignore` 의 raw 줄이 바뀌면 여기도 함께 고친다.**
+#    `raw/_templates/` 는 graphify 제외가 아니라 이 지표의 범위 판단이다(수집 자료가 아니다) —
+#    그래서 템플릿이 그래프에서 빠져도 이 가드는 잡지 않는다.
+NODELESS_SCOPE = ("raw/", "wiki/concepts/", "wiki/topics/")
+NODELESS_EXCLUDE = (
+    "raw/_templates/", "raw/Clippings/",
+    "raw/private/", "raw/company/", "raw/medical/", "raw/finance/",
+)
+
 
 def mask_lines(lines, source=None):
     """줄 리스트의 코드 스팬·펜스를 공백으로 덮는다. **줄 수와 개행을 보존**한다.
@@ -456,3 +468,25 @@ def island_slugs(backlinks_text, slugs):
     """
     have = set(BACKLINK_BLOCK_RE.findall(mask_text(backlinks_text)))
     return sorted(s for s in slugs if s not in have)
+
+
+def nodeless_md(md_paths, source_files):
+    """판정 범위(`NODELESS_SCOPE` − `NODELESS_EXCLUDE`) 안의 md 중 그래프 노드가 0개인 것.
+
+    `md_paths` 는 저장소 상대 경로 iterable, `source_files` 는 graph.json 노드의
+    `source_file` 값 집합이다. 반환은 정렬된 `list` 다.
+
+    ## 왜 있는가
+
+    graphify 는 앞 3,000자에서 논문 신호가 3개 이상 맞는 `.md` 를 `paper` 로 분류하고,
+    `graphify update` 는 그 버킷을 추출하지 않는다. 그래서 arXiv 원문을 담은 md 6건이
+    **종료코드도 경고도 없이** 그래프에서 빠져 있었다(2026-09-10~09-21 수집분, 2026-10-25 발견).
+    `graphify query` 가 첫 행동인 저장소에서 이 6건은 도달 불가였다.
+
+    🔴 **경로 전체로 비교한다.** 파일명(슬러그)으로 비교하면 `raw/x.md` 와
+    `wiki/concepts/x.md` 처럼 같은 이름이 다른 폴더에 있을 때 한쪽 노드가 다른 쪽을 가린다.
+    """
+    def in_scope(p):
+        return p.startswith(NODELESS_SCOPE) and not p.startswith(NODELESS_EXCLUDE)
+    have = set(source_files)
+    return sorted(p for p in md_paths if in_scope(p) and p not in have)

@@ -244,7 +244,7 @@ duplicate_url_note: "<왜 공존하는지(또는 왜 중복이 아닌지) + 판�
 0. (선택) Web Clipper 캡처 → `raw/Clippings/` → `/ingest <경로>` 로 승격 (`raw/` 로 **이동**) — §Web Clipper 인박스
 1. `raw/` 에 새 파일 드롭
 2. 프론트매터 보강
-3. 그래프 갱신: `graphify build --update` 또는 `scripts/graphify-py.sh -c "..._rebuild_code..."`
+3. 그래프 갱신: `bash scripts/graphify-build.sh` — `graphify update`·`_rebuild_code` 를 직접 부르지 않는다. 직접 부르면 논문 신호가 3개 이상인 md(arXiv 원문 등)가 `paper` 로 분류돼 그래프에서 빠진다(`docs/guide/graphify.md` §.md 논문 판정과 빌드 경로)
 4. 새 concept 파일 생성 여부 확인 → `wiki/concepts/` 업데이트는 `.claude/rules/wiki-concepts.md` 규칙 따름
 
 ## 금지 사항

@@ -92,6 +92,8 @@ SYNC_ITEMS=(
   "file:scripts/check-source-drift.py"
   "file:scripts/check-title-dup.py"
   "file:scripts/graphify-build.sh"
+  # graphify-build.sh 가 `update` 를 이 런처로 부른다 — 2026-10-25 신설(.md 논문 판정 해제).
+  "file:scripts/graphify-update-md-doc.py"
   "file:scripts/auto-graphify.sh"
   # UserPromptSubmit 훅(.claude/settings.json)이 부른다 — 2026-09-16 신설.
   "file:scripts/inject-current-time.sh"

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""`/lint` 구조 지표 러너 — `#3`(오래된 콘텐츠) · `#4`(중복 개념) · `#14`(enum 위반) · island(인바운드 0).
+"""`/lint` 구조 지표 러너 — `#3`(오래된 콘텐츠) · `#4`(중복 개념) · `#14`(enum 위반) · island(인바운드 0) · 노드 0 md.
 
 ## 왜 이 파일이 있는가 (원장 #64-b)
 
@@ -30,7 +30,7 @@
     python3 scripts/lint-metrics.py                       # 보고 (exit 0)
     python3 scripts/lint-metrics.py --as-of 2026-08-17    # 관측일 고정 (회차 재현)
     python3 scripts/lint-metrics.py --json                # 기계 판독
-    python3 scripts/lint-metrics.py --check               # #14 위반 있으면 exit 1
+    python3 scripts/lint-metrics.py --check               # #14 위반 또는 노드 0 md 있으면 exit 1
 
 종료코드: 0 정상 · 1 `--check` 위반 · 2 **정본 스펙 파싱 실패**(fail-closed).
 """
@@ -45,7 +45,7 @@ from datetime import date
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from wiki_scan import (  # noqa: E402
     updated_date, name_similarity, is_dup_name, is_dup_tags, tags, claim_enums,
-    island_slugs, DUP_NAME_THRESHOLD, STALE_DAYS,
+    island_slugs, nodeless_md, NODELESS_SCOPE, DUP_NAME_THRESHOLD, STALE_DAYS,
 )
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -55,6 +55,8 @@ SCOPE = ("wiki/concepts/*.md", "wiki/topics/*.md")
 # ⚠️ 낡았으면 값도 낡는다 — `rebuild-backlinks.py` 를 먼저 돌린 뒤 재라
 #    (`graphify-build.sh` 에 내장돼 있어 빌드를 돌렸다면 이미 최신이다).
 BACKLINKS = os.path.join(ROOT, "wiki/backlinks.md")
+# 「노드 0 md」 판정의 입력. 빌드(`graphify-build.sh`) 산출물이라 빌드 전 값은 직전 빌드 기준이다.
+GRAPH = os.path.join(ROOT, "graphify-out/graph.json")
 
 # frontmatter 스칼라 1개를 읽는 국소 헬퍼. `wiki_scan` 에 올리지 않은 이유는 이것이
 # **정의가 아니라 조회**이기 때문이다 — `#14` 의 판정 기준은 열거값 집합이지 이 정규식이
@@ -114,6 +116,16 @@ def measure(as_of):
     # ── island (인바운드 0) ── 정의·오독 경로는 wiki_scan.island_slugs 도크스트링
     islands = island_slugs(_read(BACKLINKS), slugs) if os.path.exists(BACKLINKS) else None
 
+    # ── 노드 0 md ── 정의·범위는 wiki_scan.nodeless_md 도크스트링
+    nodeless = None
+    if os.path.exists(GRAPH):
+        with open(GRAPH, encoding="utf-8") as f:
+            sources = {n.get("source_file") for n in json.load(f)["nodes"]}
+        md = []
+        for pre in NODELESS_SCOPE:
+            md += glob.glob(os.path.join(ROOT, pre, "**", "*.md"), recursive=True)
+        nodeless = nodeless_md((os.path.relpath(p, ROOT) for p in md), sources)
+
     # ── #14 enum ── (ValueError 는 호출자가 exit 2 로 변환한다)
     canon = claim_enums(_read(SPEC))
     enum_bad = []
@@ -131,6 +143,7 @@ def measure(as_of):
         "dup_pairs_082": name_pairs,
         "dup_pairs_tags": tag_pairs,
         "islands": islands,
+        "nodeless_md": nodeless,
         "enum_violations": enum_bad,
         "enum_canon": {k: sorted(v) for k, v in canon.items()},
     }
@@ -161,6 +174,14 @@ def report(r):
         # 🔴 «#2 orphan 과 다른 지표» 를 산출에 남긴다. 이 구분이 없어 39~41회차가
         #    index 에 등재된 island 4건을 3회차 연속 놓쳤다(원장 #81).
         print("    ⚠️ `#2` orphan(= index 미등재 AND 인바운드 0) 과 다른 지표다. 합쳐 세지 말 것.")
+    nl = r["nodeless_md"]
+    if nl is None:
+        print("노드 0 md: 측정 불가 — graphify-out/graph.json 없음")
+    else:
+        print(f"노드 0 md: {len(nl)}"
+              f"   [{' · '.join(NODELESS_SCOPE)} 중 graph.json `source_file` 부재]")
+        for p in nl:
+            print(f"      {p}")
     print(f"#14 enum 위반: {len(r['enum_violations'])}")
     for slug, field, val in r["enum_violations"]:
         print(f"      {slug}: {field} = {val}")
@@ -176,7 +197,7 @@ def main():
     ap.add_argument("--as-of", metavar="YYYY-MM-DD",
                     help="관측일 고정 (기본 오늘). 과거 회차 재현용")
     ap.add_argument("--json", action="store_true", help="기계 판독 출력")
-    ap.add_argument("--check", action="store_true", help="#14 위반이 있으면 exit 1")
+    ap.add_argument("--check", action="store_true", help="#14 위반 또는 노드 0 md 가 있으면 exit 1")
     a = ap.parse_args()
 
     as_of = date.today()
@@ -194,7 +215,9 @@ def main():
         print(json.dumps(r, ensure_ascii=False, indent=2, sort_keys=True))
     else:
         report(r)
-    return 1 if (a.check and r["enum_violations"]) else 0
+    # 노드 0 md 는 2026-10-25 에 6 → 0 으로 해소한 뒤 승격했다. graph.json 이 없으면(None)
+    # 실패로 세지 않는다 — 빌드 전 저장소(scaffold 직후)에서 --check 가 늘 깨지면 안 된다.
+    return 1 if (a.check and (r["enum_violations"] or r["nodeless_md"])) else 0
 
 
 if __name__ == "__main__":

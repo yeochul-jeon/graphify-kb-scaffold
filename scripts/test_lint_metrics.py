@@ -23,7 +23,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from wiki_scan import (  # noqa: E402
     updated_date, name_similarity, is_dup_name, is_dup_tags, claim_enums,
-    island_slugs, DUP_NAME_THRESHOLD, STALE_DAYS,
+    island_slugs, nodeless_md, NODELESS_SCOPE, NODELESS_EXCLUDE, DUP_NAME_THRESHOLD, STALE_DAYS,
 )
 
 FM = lambda body: f"---\n{body}\n---\n\n# 본문\n"
@@ -204,6 +204,53 @@ def _naive_island_grep(text, slugs):
     return sorted(s for s in slugs if s not in text)
 
 
+# ── 노드 0 md ───────────────────────────────────────────────────────────────
+# 2026-10-25 에 발견한 6건 상태를 그대로 재현한다 — 6건이 md 목록에는 있고
+# graph.json `source_file` 에는 없다. 나머지는 범위·제외·동명 파일 경계다.
+NODELESS_SIX = [
+    "raw/arxiv-wikiskill-abstract.md",
+    "raw/dr-dci-scaling-direct-corpus-interaction.md",
+    "raw/progressive-disclosure-for-llm-maintained-wiki-knowledge-bases-fulltext.md",
+    "raw/recursive-language-models-arxiv.md",
+    "raw/wikiskill-agent-experience-persistent-knowledge.md",
+    "wiki/concepts/wikiskill-persistent-knowledge-skill-evolution.md",
+]
+NODELESS_MD = NODELESS_SIX + [
+    "raw/has-node.md",
+    "wiki/topics/has-node.md",                # 같은 파일명이 raw 에 노드를 갖는다
+    "wiki/concepts/same-name.md",             # 노드 0 — 동명 raw 파일만 노드가 있다
+    "wiki/topics/no-node.md",                 # 노드 0 — topics 도 범위다
+    "raw/_templates/template.md",             # 제외
+    "raw/Clippings/clip.md",                  # 제외 (.graphifyignore)
+    "raw/private/secret.md",                  # 제외 (.graphifyignore)
+    "raw/company/a.md",                       # 제외 (.graphifyignore)
+    "raw/medical/a.md",                       # 제외 (.graphifyignore)
+    "raw/finance/a.md",                       # 제외 (.graphifyignore)
+    "wiki/_meta/weather.md",                  # 범위 밖
+    "docs/plan/x.md",                         # 범위 밖
+]
+NODELESS_SOURCES = {"raw/has-node.md", "wiki/topics/has-node.md", "raw/same-name.md",
+                    "src/app.py"}
+NODELESS_EXPECT = sorted(NODELESS_SIX + ["wiki/concepts/same-name.md", "wiki/topics/no-node.md"])
+
+
+def _naive_nodeless_basename(md_paths, source_files):
+    """파손본 — 파일명(슬러그)으로 비교한다. 동명 파일의 노드가 다른 쪽을 가린다.
+
+    범위·제외는 정본 상수를 그대로 써서 결함을 «비교 방식» 하나로 고정한다."""
+    have = {os.path.basename(s) for s in source_files}
+    return sorted(p for p in md_paths
+                  if p.startswith(NODELESS_SCOPE) and not p.startswith(NODELESS_EXCLUDE)
+                  and os.path.basename(p) not in have)
+
+
+def _naive_nodeless_no_exclude(md_paths, source_files):
+    """파손본 — 제외 경로를 빼지 않는다. 템플릿·인박스·민감 자료를 매번 잡는다."""
+    return sorted(p for p in md_paths
+                  if p.startswith(("raw/", "wiki/concepts/", "wiki/topics/"))
+                  and p not in source_files)
+
+
 def main():
     bad = []
 
@@ -296,8 +343,22 @@ def main():
     # 🔴 파손본이 정말 파손되는지 — `beta` 를 놓쳐야 이 시험이 의미가 있다.
     broke_island = len(set(ISLAND_EXPECT) - set(_naive_island_grep(BACKLINKS_FIXTURE, ISLAND_SLUGS)))
 
+    # ── 노드 0 md ──
+    got_nl = nodeless_md(NODELESS_MD, NODELESS_SOURCES)
+    if got_nl != NODELESS_EXPECT:
+        bad.append(f"🔴 노드 0 md 정본이 갈렸다: {got_nl} (기대 {NODELESS_EXPECT})")
+    if nodeless_md(NODELESS_MD, NODELESS_SOURCES | set(NODELESS_SIX)) != ["wiki/concepts/same-name.md",
+                                                                          "wiki/topics/no-node.md"]:
+        bad.append("노드 0 md: 6건에 노드가 생긴 상태를 해소로 보지 않았다")
+    broke_nl_base = len(set(NODELESS_EXPECT) ^ set(_naive_nodeless_basename(NODELESS_MD, NODELESS_SOURCES)))
+    broke_nl_excl = len(set(NODELESS_EXPECT) ^ set(_naive_nodeless_no_exclude(NODELESS_MD, NODELESS_SOURCES)))
+
     # ── 파손본 검증 — 실측 고정값. 바뀌면 시험 설계가 바뀐 것이다. ──
     pins = [
+        # naive_nodeless_basename : 동명 raw 노드에 가려진 `same-name` 을 놓친다 = 1건
+        ("naive_nodeless_basename", broke_nl_base, 1),
+        # naive_nodeless_no_exclude : 템플릿·Clippings·private·company·medical·finance 를 잡는다 = 6건
+        ("naive_nodeless_no_exclude", broke_nl_excl, 6),
         # naive_fullline : «괄호 주석» · «해시 주석» = 2건
         ("naive_updated_fullline", broke_fullline, 2),
         # naive_bodyscan : «본문 yaml 예시» · «frontmatter 부재» = 2건
@@ -318,7 +379,7 @@ def main():
     for b in bad:
         print("🔴", b)
     print(f"\n케이스 #3 {len(UPDATED_CASES)} · #4 {len(DUP_CASES)} · #14 {len(ENUM_CASES)}"
-          f" · island {len(ISLAND_SLUGS)}")
+          f" · island {len(ISLAND_SLUGS)} · 노드 0 md {len(NODELESS_MD)}")
     print("파손본 검증 " + " / ".join(f"{l} {g}" for l, g, _ in pins))
     print("위반 없음." if not bad else f"위반 {len(bad)}건.")
     return 1 if bad else 0

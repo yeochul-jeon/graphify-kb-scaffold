@@ -396,6 +396,7 @@ done
   - ⚠️ **산문을 긁지 말 것** — 같은 절의 서술이 `claim_status: source_backed` 같은 값을 문장 안에 쓴다. 「파이프 있는 아무 `키: a | b` 줄」로 훑으면 `confidence`·`last_verified`·`review_due` 까지 **5키**를 집는다. 판정 대상 쪽도 같다 — frontmatter 로 범위를 좁히지 않고 grep 하면 본문 산문에서 **가짜 값 6건**이 딸려 온다
   - `scripts/attach-claim-metadata.py` 도 같은 함수로 자기 방출 리터럴이 정본의 원소인지 확인하고, 아니면 쓰기 전에 멈춘다
   - 명령: `python3 scripts/lint-metrics.py --check` · 회귀 시험 `python3 scripts/test_lint_metrics.py`
+  - ⚠️ **2026-10-25 부터 `--check` 는 「노드 0 md」(그래프에 노드가 없는 raw·wiki md)가 있어도 exit 1 이다.** exit 1 을 enum 위반으로 읽기 전에 출력의 `#14 enum 위반:`·`노드 0 md:` 두 줄을 본다. 노드 0 md 는 graph.json(빌드 산출물)과 비교하므로 **빌드 전에 재면 새로 수집한 md 가 정상인데도 잡힌다** — `bash scripts/graphify-build.sh` 뒤에 다시 잰다. 정의는 `wiki/_meta/weather.md` §측정 정의 「노드 0 md」
 - ⚠️ **enum 판정 기준은 `.claude/rules/wiki-concepts.md` 의 `claim_status`/`evidence_level` 열거값 절 하나뿐이다.** 이 파일을 열어 대조할 것. `.claude/commands/compile.md`·`review.md` 는 각자 자기 워크플로의 **기본값만** 서술하므로, 한쪽만 읽고 다른 쪽 기본값을 위반으로 집계하면 오탐이 된다 — 4~8회차가 `compile.md` 만 보고 `review.md` 의 `inferred` 를 5회 연속 위반으로 오보했다 (2026-07-27 정정).
 
 ### 15. Knowledge Weather 생성

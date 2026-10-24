@@ -138,13 +138,13 @@ open graphify-out/graph.html
 /graphify . --update
 ```
 
-또는 CLAUDE.md에 정의된 Python 직접 호출:
+또는 LLM 없는 증분 재추출 wrapper:
 
 ```bash
-python3 -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"
+bash scripts/graphify-build.sh
 ```
 
-> CLAUDE.md 규칙: 코드 파일을 수정한 뒤에는 이 명령을 실행해 그래프를 최신 상태로 유지하세요.
+> AGENTS.md 규칙: 코드 파일을 수정한 뒤에는 이 명령을 실행해 그래프를 최신 상태로 유지하세요. `_rebuild_code`·`graphify update` 를 직접 부르지 마세요 — 아래 §.md 논문 판정과 빌드 경로.
 
 ### 방법 2: 전체 재빌드
 
@@ -161,7 +161,23 @@ python3 -c "from graphify.watch import _rebuild_code; from pathlib import Path; 
 | 파일 몇 개 추가/수정 | 증분 재빌드 (`--update`) |
 | 대량 파일 변경 (50개+) | 전체 재빌드 (`--wiki`) |
 | 그래프 이상하게 느껴질 때 | 전체 재빌드 |
-| 코드 수정 후 CLAUDE.md 지시 | Python 직접 호출 |
+| 코드 수정 후 AGENTS.md 지시 | `bash scripts/graphify-build.sh` |
+
+### .md 논문 판정과 빌드 경로
+
+graphify 는 `.md` 앞 3,000자에서 논문 신호(`arxiv`·`abstract`·`doi:`·arXiv ID `1706.03762` 형태 등 13종) 중 3개 이상이 맞으면 그 파일을 `paper` 로 분류합니다. `graphify update`(LLM 없는 증분 재추출)는 `code`·`document` 만 다시 추출하고 `paper` 는 건너뜁니다. 그래서 arXiv 원문을 담은 md 가 경고 없이 그래프에서 빠졌습니다 — 2026-10-25 에 6건을 발견했습니다(계획 `docs/plan/plans/2026-10-25-graphify-paper-misclassification.md`).
+
+- **조치**: `scripts/graphify-build.sh` 는 `update` 를 `scripts/graphify-update-md-doc.py` 런처로 부릅니다. 런처는 그 프로세스 안에서만 `graphify.detect._looks_like_paper` 를 «`.md` 면 False» 로 바꿉니다. `graphify query`·`/graphify` 스킬 등 다른 호출은 원래 판정을 씁니다.
+- **가드**: `python3 scripts/lint-metrics.py --check` 가 「노드 0 md」(그래프에 노드가 없는 `raw/**`·`wiki/concepts`·`wiki/topics` md)를 출력하고, 1건이라도 있으면 exit 1 입니다. 정의는 `wiki/_meta/weather.md` §측정 정의 「노드 0 md」.
+- ⚠️ **빌드 경로를 우회하지 마세요.** `scripts/graphify-py.sh -m graphify update .` 나 `graphify.watch._rebuild_code` 를 직접 부르면 런처를 거치지 않아 논문 판정이 다시 켜집니다. 런처도 `scripts/graphify-py.sh` 로 불러야 합니다 — `PYTHONHASHSEED` 가 없으면 graphify 가 `-m graphify` 로 프로세스를 다시 띄워 패치가 사라지므로, 런처는 그 경우 exit 3 으로 멈춥니다.
+
+**런처가 exit 3 으로 멈출 때** — 세 경우입니다: `PYTHONHASHSEED` 미설정(→ `scripts/graphify-py.sh` 로 부르면 해결), `_looks_like_paper` 가 사라짐, 패치 후에도 논문 신호 md(`arXiv 2501.00001` + `Abstract`)가 `detect()` 에서 `document` 버킷에 들어가지 않음. 뒤의 둘은 graphify 업그레이드 때 생깁니다. 처리:
+
+1. 새 버전의 `graphify/detect.py` 에서 `classify_file` 이 `DOC_EXTENSIONS` 를 `paper` 로 돌리는 분기를 찾습니다.
+2. 그 분기가 부르는 함수를 런처의 패치 대상으로 바꿉니다.
+3. `bash scripts/graphify-build.sh` 후 `python3 scripts/lint-metrics.py --check` 가 exit 0 인지 봅니다.
+
+**런처를 걷어낼 때** — upstream 이 `update` 에서 논문 md 도 추출하게 바뀌면 런처는 멈추지 않고 그대로 통과하므로, 업그레이드 때 직접 확인합니다: `graphify-build.sh` 의 `update` 줄을 `scripts/graphify-py.sh -m graphify update .` 로 되돌려 빌드한 뒤 `lint-metrics.py --check` 가 exit 0 이면 런처를 지웁니다.
 
 ---
 

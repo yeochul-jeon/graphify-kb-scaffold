@@ -172,11 +172,11 @@ git config --unset core.hooksPath
 # Claude Code 세션에서
 /graphify . --update
 
-# 또는 일반 터미널에서 (Python 직접 호출)
-python3 -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"
+# 또는 일반 터미널에서 (LLM 없는 증분 재추출)
+bash scripts/graphify-build.sh
 ```
 
-> CLAUDE.md 규칙: 코드 파일을 수정한 뒤에는 재빌드 명령을 실행하세요.
+> AGENTS.md 규칙: 코드 파일을 수정한 뒤에는 재빌드 명령을 실행하세요. `_rebuild_code` 를 직접 부르지 마세요 — `docs/guide/graphify.md` §.md 논문 판정과 빌드 경로.
 
 **팁**: `.graphify_python` 파일이 있으면 그 경로의 Python 인터프리터를 사용합니다. 수동 Python 호출 전에 확인하세요:
 
@@ -236,10 +236,10 @@ cat graphify-out/.graphify_python
 # 또는: /Users/user/.venv/graphify/bin/python3
 ```
 
-**수동 재빌드 전**: 이 파일에 기록된 Python으로 호출하면 호환성 문제를 예방할 수 있습니다:
+**수동 재빌드**: `scripts/graphify-build.sh` 가 내부에서 `scripts/graphify-py.sh` 를 거쳐 이 파일에 기록된 Python 을 씁니다:
 
 ```bash
-$(cat graphify-out/.graphify_python) -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"
+bash scripts/graphify-build.sh
 ```
 
 ---
