@@ -143,7 +143,8 @@ verbatim_checked: 2026-04-06
 ### 구문
 
 ```
-/lint             ← 점검만 (자동 수정 없음)
+/lint             ← 범위 점검 — 이번 세션 변경분 + 전역 러너, 원장(_meta 의 weather·suggested-investigations) 갱신 안 함
+/lint --full      ← 주간 전체 점검 — 전체 + 원장 갱신 (.claude/commands/lint.md §실행 범위)
 /lint --fix       ← 자동 수정 가능한 항목 처리
 ```
 

@@ -68,8 +68,8 @@ SYNC_ITEMS=(
   # 이 스크립트가 없으면 전파된 스킬이 없는 파일을 부른다 (2026-08-23).
   "file:scripts/check-extraction-chunks.py"
   "file:scripts/sync-scaffold.sh"
-  # 아래 25종은 전파 자산(.claude/commands·rules·skills, AGENTS.md, docs/guide,
-  # .claude/settings.json, .githooks/pre-commit)이 실제로 부르는 스크립트다 (2026-08-24).
+  # 아래 목록은 전파 자산(.claude/commands·rules·skills, AGENTS.md, docs/guide,
+  # .claude/settings.json, .githooks/pre-commit)이 실제로 부르는 스크립트다 (2026-08-24 25종으로 시작, 이후 추가분은 항목별 주석).
   # 이것들이 없으면 전파된 /lint·/compile·/ingest 와 AGENTS.md 지시가 없는 파일을 부른다.
   # 누락 재발은 아래 「참조 무결성 preflight」 가 exit 5 로 막는다.
   #   wiki_scan.py 는 허브다 — 8개 스크립트가 import 한다. 단독으로 빼면 안 된다.

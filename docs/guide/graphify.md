@@ -177,7 +177,7 @@ graphify 는 `.md` 앞 3,000자에서 논문 신호(`arxiv`·`abstract`·`doi:`�
 2. 그 분기가 부르는 함수를 런처의 패치 대상으로 바꿉니다.
 3. `bash scripts/graphify-build.sh` 후 `python3 scripts/lint-metrics.py --check` 가 exit 0 인지 봅니다.
 
-**런처를 걷어낼 때** — upstream 이 `update` 에서 논문 md 도 추출하게 바뀌면 런처는 멈추지 않고 그대로 통과하므로, 업그레이드 때 직접 확인합니다: `graphify-build.sh` 의 `update` 줄을 `scripts/graphify-py.sh -m graphify update .` 로 되돌려 빌드한 뒤 `lint-metrics.py --check` 가 exit 0 이면 런처를 지웁니다.
+**런처를 걷어낼 때** — upstream 이 `update` 에서 논문 md 도 추출하게 바뀌면 런처는 멈추지 않고 그대로 통과하므로, 업그레이드 때 직접 확인합니다: `graphify-build.sh` 의 `update` 줄을 `scripts/graphify-py.sh -m graphify update .` 로 되돌려 빌드한 뒤 `lint-metrics.py --check` 가 exit 0 이면 런처를 지웁니다. upstream 제보: https://github.com/Graphify-Labs/graphify/issues/4750 (2026-10-25, 0.9.68·0.9.95 재현) — 이 이슈가 닫히면 그 버전에서 위 확인을 합니다. 2026-10-26 **0.9.96 에서 수정**돼 닫혔습니다(`paper` 로 분류된 `.md`·`.mdx`·`.qmd` 를 `update` 가 quick-scan, 분류 자체는 그대로). 격리 venv 2 파일 재현에서 런처 없이 `paper_notes.md` 노드 2 (2026-10-27). 0.9.96 으로 올릴 때 위 확인을 합니다.
 
 ---
 
