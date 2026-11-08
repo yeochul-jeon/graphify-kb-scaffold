@@ -75,6 +75,10 @@
           {
             "type": "command",
             "command": "if [ -f scripts/save-checkpoint.sh ]; then bash scripts/save-checkpoint.sh post-bash 2>/dev/null || true; fi"
+          },
+          {
+            "type": "command",
+            "command": "if [ -f scripts/push-log-hook.py ]; then python3 scripts/push-log-hook.py; fi"
           }
         ]
       },

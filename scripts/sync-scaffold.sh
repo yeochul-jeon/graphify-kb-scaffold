@@ -101,6 +101,8 @@ SYNC_ITEMS=(
   "file:scripts/clippings-inbox.sh"
   "file:scripts/save-checkpoint.sh"
   "file:scripts/wiki-dirty-flag.sh"
+  # PostToolUse(Bash) 훅이 부른다 — 2026-11-08 신설. push 보고를 git 출력에 묶는다.
+  "file:scripts/push-log-hook.py"
   "file:scripts/ingest-fetch.sh"
   "file:scripts/ingest-youtube.sh"
   # .claude/commands/ingest.md §이미지 핸들링 5항이 부른다 — 2026-09-29 신설(원장 #103).
