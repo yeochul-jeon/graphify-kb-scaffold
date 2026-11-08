@@ -225,7 +225,7 @@ scripts/graphify-py.sh scripts/attach-claim-metadata.py --apply    # 실제 쓰�
 2. **자기 선언 요약본 스크린을 통과해야 한다.** `raw` **본문 도입부**(frontmatter 제외, 앞 40줄)에 *`curated source bundle` · `summariz` · `abridged` · `요약본` · `발췌` · `축약`* 이 있으면 **(d) 진입 불가**. ⚠️ **이것은 판정이 아니라 선별이다** — 2026-08-09 실측에서 본문 적중 7건 중 **실제 자기 선언은 1건**(`woowacourse-prolog-acceptance-test`)이고 나머지 6건은 본문이 그 단어를 *다루는* 것이었다(`Summarize my meetings` 등). **걸린 건은 사람이 그 줄을 읽고 가른다.** ⚠️ **`note:` 의 적중은 세지 않는다** — 감사·재수집 이력이 그 단어를 쓴다.
 3. **①(주장 ↔ 출처 대조)을 저장분 기준으로 수행하고 결과를 승인 기록에 남긴다.** 정량 주장(수치·직접 인용문)은 **저장분 안의 위치**를 함께 적는다.
 
-> 🔴 **왜 이 스크린이 안전장치로 성립하는가 — 0번을 낳은 두 실패가 실제로 걸린다.** `raw/obra-superpowers.md:17` 은 *"This **curated source bundle summarizes** the README and five representative skill documents"* 를 **본문에** 담고 있었고, 교체 전 `mattpocock-skills` 도 같은 문구였다. **둘 다 조건 2에서 (d) 진입이 막히고 (b) 로 떨어진다.** 재현율을 우선하고 정밀도는 사람 확인으로 보완하는 설계다.
+> 🔴 **왜 이 스크린이 안전장치로 성립하는가 — 0번을 낳은 두 실패가 실제로 걸린다.** 재수집 전 `raw/obra-superpowers.md:17`(`d6f2a641`)은 *"This **curated source bundle summarizes** the README and five representative skill documents"* 를 **본문에** 담고 있었고, 교체 전 `mattpocock-skills` 도 같은 문구였다. **둘 다 조건 2에서 (d) 진입이 막히고 (b) 로 떨어진다.** 재현율을 우선하고 정밀도는 사람 확인으로 보완하는 설계다.
 >
 > 🔴 **(d) 는 "어쩔 수 없음" 을 방치하는 것이 아니라 기록하는 것이다.** 차이는 `evidence_level` 에 남아 **다음 사람이 그 문서를 1차 자료로 인용하지 못한다**는 데 있다. 판정 불가를 이유로 승인 대기열 **밖**에 두면 위험은 0이지만 **검증도 0**이며, 2026-08-08 기준 그 상태의 페이지가 **271 / 295** 였다.
 >
@@ -383,7 +383,7 @@ review_due: <승인일 + 30일>     # 기존 관행
 - `wiki/backlinks.md` 자동 생성 파일이지만 수동 수정은 금지 — `scripts/graphify-py.sh scripts/rebuild-backlinks.py` (결정론적 strict-inbound, `graphify-build.sh`·`/lint --fix`에 내장) 로 재생성
 - Claude Code 세션(환경변수 `CLAUDECODE=1`, `CI` 미설정)의 커밋은 pre-commit 훅이 staged `wiki/` 목록만 출력하고 통과시킨다 — 우회가 필요 없다. 사유는 커밋 메시지에 남긴다 (2026-10-19, `3cf05712`)
 - 그 밖의 비대화형 환경(Codex 등)에서는 커밋 시 `ALLOW_WIKI_EDIT=1 git commit` 필요 (pre-commit 훅 우회)
-- **사유도 함께 넘긴다**: `ALLOW_WIKI_EDIT_REASON="<왜 우회하는가>"`. 훅이 이 값을 그대로 출력하며(`.githooks/pre-commit:10`), 비우면 `bypassed: no reason provided` 가 로그에 남는다 — OT-6 으로 여러 회차 이월된 항목의 실체가 **변수 존재를 몰라서**였다
+- **사유도 함께 넘긴다**: `ALLOW_WIKI_EDIT_REASON="<왜 우회하는가>"`. 훅이 이 값을 그대로 출력하며(`.githooks/pre-commit:12`), 비우면 `bypassed: no reason provided` 가 로그에 남는다 — OT-6 으로 여러 회차 이월된 항목의 실체가 **변수 존재를 몰라서**였다
 
 ```bash
 ALLOW_WIKI_EDIT=1 ALLOW_WIKI_EDIT_REASON="lint 16회차 조치" git commit -m "..."
