@@ -10,9 +10,11 @@
 #   셸 코드로 실행되지 않는다 (upstream 0.9.68 #3742). 없는 경로면 exit 1.
 #
 # 설치 우선순위 (graphify 미발견 시):
-#   1. uv tool install graphifyy   (uv 있으면)
-#   2. pipx install graphifyy      (pipx 있으면)
-#   3. pip install graphifyy       (fallback)
+#   1. uv tool install graphifyy==0.9.96   (uv 있으면)
+#   2. pipx install graphifyy==0.9.96      (pipx 있으면)
+#   3. pip install graphifyy==0.9.96       (fallback)
+#   버전을 고정한다 — 고정이 없으면 PC 마다 다른 엔진이 깔린다. 올릴 때는 검토 문서
+#   (docs/research/graphify-0.9.96-upgrade-review.md 선례)를 쓰고 네 줄을 함께 바꾼다.
 set -euo pipefail
 
 GRAPHIFY_BIN=$(which graphify 2>/dev/null || true)
@@ -21,10 +23,10 @@ if [ -z "$GRAPHIFY_BIN" ]; then
     # graphify 미설치 — uv tool / pipx / pip 순으로 시도
     if command -v uv >/dev/null 2>&1; then
         echo "graphify 미설치. uv tool로 설치 시도..." >&2
-        uv tool install graphifyy --quiet 2>/dev/null || true
+        uv tool install graphifyy==0.9.96 --quiet 2>/dev/null || true
     elif command -v pipx >/dev/null 2>&1; then
         echo "graphify 미설치. pipx로 설치 시도..." >&2
-        pipx install graphifyy --quiet 2>/dev/null || true
+        pipx install graphifyy==0.9.96 --quiet 2>/dev/null || true
     fi
     # 재탐지
     GRAPHIFY_BIN=$(which graphify 2>/dev/null || true)
@@ -39,8 +41,8 @@ else
     # uv / pipx 모두 없거나 실패 시 pip fallback
     PYTHON="python3"
     "$PYTHON" -c "import graphify" 2>/dev/null || \
-        "$PYTHON" -m pip install graphifyy -q 2>/dev/null || \
-        "$PYTHON" -m pip install graphifyy -q --break-system-packages 2>&1 | tail -3
+        "$PYTHON" -m pip install graphifyy==0.9.96 -q 2>/dev/null || \
+        "$PYTHON" -m pip install graphifyy==0.9.96 -q --break-system-packages 2>&1 | tail -3
 fi
 
 mkdir -p graphify-out

@@ -19,10 +19,9 @@ if [ "$MODE" = "--cluster-only" ]; then
   scripts/graphify-py.sh -m graphify cluster-only .
 else
   # 기본: 증분 코드 재추출 (--update 포함)
-  # 런처 경유 — `.md` 의 논문 판정을 이 호출에서만 끈다. 직접 `-m graphify update .` 로 부르면
-  # 논문 신호가 3개 이상인 md(arXiv 원문 등)가 `paper` 로 분류돼 그래프에서 빠진다.
-  # 근거·업그레이드 시 처리: scripts/graphify-update-md-doc.py 도크스트링.
-  scripts/graphify-py.sh scripts/graphify-update-md-doc.py update .
+  # 0.9.96 부터 `update` 가 논문으로 분류된 md 도 추출한다(upstream #4750). 그 전에 쓰던
+  # 런처 graphify-update-md-doc.py 는 2026-11-08 삭제 — docs/research/graphify-0.9.96-upgrade-review.md
+  scripts/graphify-py.sh -m graphify update .
   # meta 파일(index.md, backlinks.md, compile-log.md) 구버전 캐시 정리
   scripts/graphify-py.sh scripts/cleanup-meta-caches.py
   # wiki/backlinks.md 결정론적 재생성 (strict-inbound 역인덱싱 — 드리프트 방지)

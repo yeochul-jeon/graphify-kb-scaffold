@@ -144,7 +144,7 @@ open graphify-out/graph.html
 bash scripts/graphify-build.sh
 ```
 
-> AGENTS.md 규칙: 코드 파일을 수정한 뒤에는 이 명령을 실행해 그래프를 최신 상태로 유지하세요. `_rebuild_code`·`graphify update` 를 직접 부르지 마세요 — 아래 §.md 논문 판정과 빌드 경로.
+> AGENTS.md 규칙: 코드 파일을 수정한 뒤에는 이 명령을 실행해 그래프를 최신 상태로 유지하세요. `graphify update` 만 따로 부르면 DIGEST·backlinks 재생성이 빠집니다 — 아래 §.md 논문 판정과 빌드 경로.
 
 ### 방법 2: 전체 재빌드
 
@@ -165,19 +165,19 @@ bash scripts/graphify-build.sh
 
 ### .md 논문 판정과 빌드 경로
 
-graphify 는 `.md` 앞 3,000자에서 논문 신호(`arxiv`·`abstract`·`doi:`·arXiv ID `1706.03762` 형태 등 13종) 중 3개 이상이 맞으면 그 파일을 `paper` 로 분류합니다. `graphify update`(LLM 없는 증분 재추출)는 `code`·`document` 만 다시 추출하고 `paper` 는 건너뜁니다. 그래서 arXiv 원문을 담은 md 가 경고 없이 그래프에서 빠졌습니다 — 2026-10-25 에 6건을 발견했습니다(계획 `docs/plan/plans/2026-10-25-graphify-paper-misclassification.md`).
+graphify 는 `.md` 앞 3,000자에서 논문 신호(`arxiv`·`abstract`·`doi:`·arXiv ID `1706.03762` 형태 등 13종) 중 3개 이상이 맞으면 그 파일을 `paper` 로 분류합니다. 0.9.95 까지 `graphify update`(LLM 없는 증분 재추출)는 `paper` 를 건너뛰어서, arXiv 원문을 담은 md 가 경고 없이 그래프에서 빠졌습니다 — 2026-10-25 에 6건을 발견했습니다(계획 `docs/plan/plans/2026-10-25-graphify-paper-misclassification.md`, upstream https://github.com/Graphify-Labs/graphify/issues/4750).
 
-- **조치**: `scripts/graphify-build.sh` 는 `update` 를 `scripts/graphify-update-md-doc.py` 런처로 부릅니다. 런처는 그 프로세스 안에서만 `graphify.detect._looks_like_paper` 를 «`.md` 면 False» 로 바꿉니다. `graphify query`·`/graphify` 스킬 등 다른 호출은 원래 판정을 씁니다.
+- **현재(2026-11-08~)**: 엔진을 **0.9.96 으로 고정**했습니다(`scripts/graphify-bootstrap.sh` 설치 줄 4곳). 0.9.96 부터 `update` 가 `paper` 로 분류된 `.md`·`.mdx`·`.qmd` 도 추출하므로(분류 자체는 그대로), `scripts/graphify-build.sh` 는 `scripts/graphify-py.sh -m graphify update .` 를 직접 부릅니다. 그동안 쓰던 런처 `graphify-update-md-doc.py`(`_looks_like_paper` 몽키패치)는 같은 날 삭제했습니다. 검토: `docs/research/graphify-0.9.96-upgrade-review.md`.
 - **가드**: `python3 scripts/lint-metrics.py --check` 가 「노드 0 md」(그래프에 노드가 없는 `raw/**`·`wiki/concepts`·`wiki/topics` md)를 출력하고, 1건이라도 있으면 exit 1 입니다. 정의는 `wiki/_meta/weather.md` §측정 정의 「노드 0 md」.
-- ⚠️ **빌드 경로를 우회하지 마세요.** `scripts/graphify-py.sh -m graphify update .` 나 `graphify.watch._rebuild_code` 를 직접 부르면 런처를 거치지 않아 논문 판정이 다시 켜집니다. 런처도 `scripts/graphify-py.sh` 로 불러야 합니다 — `PYTHONHASHSEED` 가 없으면 graphify 가 `-m graphify` 로 프로세스를 다시 띄워 패치가 사라지므로, 런처는 그 경우 exit 3 으로 멈춥니다.
+- **버전을 올리지 않은 이유(0.9.97~)**: 2026-11-08 질문 20개 비교에서 0.9.103·0.9.104 는 정답 페이지 5/20, 0.9.96 은 8/20(0.9.68 과 같음)이었습니다(`graphify query --budget 1500`, 검토 문서 §7).
 
-**런처가 exit 3 으로 멈출 때** — 세 경우입니다: `PYTHONHASHSEED` 미설정(→ `scripts/graphify-py.sh` 로 부르면 해결), `_looks_like_paper` 가 사라짐, 패치 후에도 논문 신호 md(`arXiv 2501.00001` + `Abstract`)가 `detect()` 에서 `document` 버킷에 들어가지 않음. 뒤의 둘은 graphify 업그레이드 때 생깁니다. 처리:
+**엔진을 올릴 때 확인 (probe 시험)** — `lint-metrics.py --check` exit 0 만으로는 판별되지 않습니다. 기존 논문 md 는 이미 노드가 있고, 같은 사본의 두 번째 빌드는 재추출을 하지 않기 때문입니다(2026-11-08, 버그가 있는 0.9.68 에서도 통과). 대신:
 
-1. 새 버전의 `graphify/detect.py` 에서 `classify_file` 이 `DOC_EXTENSIONS` 를 `paper` 로 돌리는 분기를 찾습니다.
-2. 그 분기가 부르는 함수를 런처의 패치 대상으로 바꿉니다.
-3. `bash scripts/graphify-build.sh` 후 `python3 scripts/lint-metrics.py --check` 가 exit 0 인지 봅니다.
+1. 논문으로 분류되는 md 를 새 이름으로 복사합니다 — 예: `cp raw/arxiv-harness-design-coding-agents-abstract.md raw/zz-paper-probe.md`.
+2. `bash scripts/graphify-build.sh` 후 `graph.json` 에서 `source_file` 에 `zz-paper-probe` 가 든 노드 수를 셉니다. 0 이면 새 버전이 논문 md 를 다시 빠뜨립니다(0.9.68 런처 없이 0, 0.9.96 은 4).
+3. 복사본을 지우고 다시 빌드합니다.
 
-**런처를 걷어낼 때** — upstream 이 `update` 에서 논문 md 도 추출하게 바뀌면 런처는 멈추지 않고 그대로 통과하므로, 업그레이드 때 직접 확인합니다: `graphify-build.sh` 의 `update` 줄을 `scripts/graphify-py.sh -m graphify update .` 로 되돌려 빌드한 뒤 `lint-metrics.py --check` 가 exit 0 이면 런처를 지웁니다. upstream 제보: https://github.com/Graphify-Labs/graphify/issues/4750 (2026-10-25, 0.9.68·0.9.95 재현) — 이 이슈가 닫히면 그 버전에서 위 확인을 합니다. 2026-10-26 **0.9.96 에서 수정**돼 닫혔습니다(`paper` 로 분류된 `.md`·`.mdx`·`.qmd` 를 `update` 가 quick-scan, 분류 자체는 그대로). 격리 venv 2 파일 재현에서 런처 없이 `paper_notes.md` 노드 2 (2026-10-27). 0.9.96 으로 올릴 때 위 확인을 합니다.
+같은 비교를 탐색 품질에도 합니다: 최근 `output/answer-*.md` 의 `> 질문:`·`> 참조:` 줄로 질문 20개를 뽑아 새 버전에서 `graphify query` 결과에 참조 페이지가 나오는지 셉니다.
 
 ---
 
