@@ -8,6 +8,7 @@ push 보고의 커밋 목록은 이 출력에서만 옮긴다 (2026-11-06 없는
 범위 줄이 없으면(새 브랜치·Everything up-to-date) push 출력 원문 꼬리를 그대로 붙인다.
 """
 import json
+import os
 import re
 import subprocess
 import sys
@@ -15,6 +16,18 @@ import sys
 RANGE = re.compile(r"^\s*[+ ]?\s*([0-9a-f]{7,40})\.\.\.?([0-9a-f]{7,40})\s+(\S+)\s+->\s+(\S+)", re.M)
 PUSH_CMD = re.compile(r"\bgit\b[^;&|\n]*\bpush\b")
 PUSH_OUT = re.compile(r"^To \S+|Everything up-to-date", re.M)
+REPO_DIR = re.compile(r"""(?:\bcd\s+|\bgit\s+-C\s+)(["']?)([^\s;&|"']+)\1""")
+
+
+def repo_dir(command: str, cwd: str | None) -> str | None:
+    """push 를 실행한 저장소. 명령 안의 `cd X &&`·`git -C X` 는 끝나면 셸 cwd 에 남지 않으므로
+    (2026-11-08 scaffold push 에서 조회 exit 128) push 앞의 마지막 경로를 cwd 기준으로 푼다."""
+    head = command[: PUSH_CMD.search(command).end()]
+    found = REPO_DIR.findall(head)
+    if not found:
+        return cwd
+    path = os.path.expanduser(found[-1][1])
+    return path if os.path.isabs(path) else os.path.join(cwd or os.getcwd(), path)
 
 
 def response_text(resp) -> str:
@@ -30,12 +43,17 @@ def build_context(command: str, output: str, cwd: str | None) -> str | None:
         return None
     lines = ["[push-log-hook] push 보고의 커밋 목록은 아래 git 출력에서만 옮긴다."]
     ranges = RANGE.findall(output)
+    repo = repo_dir(command, cwd)
     for old, new, src, dst in ranges:
-        r = subprocess.run(
-            ["git", "log", "--oneline", f"{old}..{new}"],
-            cwd=cwd, capture_output=True, text=True,
-        )
-        lines.append(f"$ git log --oneline {old}..{new}   # {src} -> {dst}")
+        lines.append(f"$ git log --oneline {old}..{new}   # {src} -> {dst}  (in {repo})")
+        try:
+            r = subprocess.run(
+                ["git", "log", "--oneline", f"{old}..{new}"],
+                cwd=repo, capture_output=True, text=True,
+            )
+        except OSError as e:  # 명령에서 푼 경로가 없을 때 — 조용히 넘기지 않고 출력에 남긴다
+            lines.append(f"(조회 실패) {e}")
+            continue
         lines.append(r.stdout.rstrip() if r.returncode == 0 else f"(조회 실패 exit {r.returncode}) {r.stderr.strip()}")
     if not ranges:
         tail = "\n".join(output.strip().splitlines()[-6:])
