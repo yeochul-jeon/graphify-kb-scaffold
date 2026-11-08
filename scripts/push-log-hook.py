@@ -14,7 +14,8 @@ import subprocess
 import sys
 
 RANGE = re.compile(r"^\s*[+ ]?\s*([0-9a-f]{7,40})\.\.\.?([0-9a-f]{7,40})\s+(\S+)\s+->\s+(\S+)", re.M)
-PUSH_CMD = re.compile(r"\bgit\b[^;&|\n]*\bpush\b")
+# `git add scripts/push-log-hook.py` 처럼 인자 속 push 는 제외한다 (2026-11-08 잘못된 cd 선택).
+PUSH_CMD = re.compile(r"""\bgit\s+(?:-C\s+(["']?)[^\s"']+\1\s+)?push\b""")
 PUSH_OUT = re.compile(r"^To \S+|Everything up-to-date", re.M)
 REPO_DIR = re.compile(r"""(?:\bcd\s+|\bgit\s+-C\s+)(["']?)([^\s;&|"']+)\1""")
 
