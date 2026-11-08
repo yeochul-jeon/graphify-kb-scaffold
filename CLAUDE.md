@@ -23,3 +23,4 @@
 
 이 주석은 컨텍스트에 실리지 않는다 (Claude Code 가 블록 주석을 제거한 뒤 주입한다).
 -->
+@.claude/ratchet.md

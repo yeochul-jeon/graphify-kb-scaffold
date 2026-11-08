@@ -78,6 +78,9 @@ SYNC_ITEMS=(
   "file:scripts/lint-registry.py"
   "file:scripts/test_lint_metrics.py"
   "file:scripts/test_wiki_scan_tags.py"
+  # .claude/rules/raw-ingest.md §수집 이유 와 raw/_templates 가 부른다 — 2026-11-08 ⓓ 추가와 함께 전파.
+  "file:scripts/check-raw-structure.py"
+  "file:scripts/test_check_raw_structure.py"
   "file:scripts/rebuild-backlinks.py"
   "file:scripts/rebuild-cross-edges.py"
   "file:scripts/rebuild-graph-report.py"

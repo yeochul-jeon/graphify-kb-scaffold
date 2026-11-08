@@ -31,6 +31,8 @@ verbatim: <true | false>          # 필수 — 수집 시점에 판정한다 (�
 verbatim_checked: YYYY-MM-DD      # 필수
 author: <선택>
 published: <선택, YYYY-MM-DD>
+note: |                           # 필수 (2026-11-09 이후) — 첫 줄은 `수집 이유:` (아래 §수집 이유)
+  수집 이유: <왜 이 자료를 받는가 한 줄>
 ---
 ```
 
@@ -41,6 +43,15 @@ published: <선택, YYYY-MM-DD>
 > **2026-07-27 정정**: 이 절은 원래 `source:` / `captured:` 를 규정했으나 실제 사용은 `source_url:` 279건(96%) · `ingested_date:` 279건(96%) 대 `source:` 12건(4%) 였다 (`raw/*.md` frontmatter 보유 291건 기준). 규격을 실사용에 맞춰 정정했다. 기존 12건은 소급 변경하지 않는다.
 
 > **2026-08-17 정정 — `compiled_date` 기재.** 같은 유형이다. 이 블록에 `compiled_date` 가 없었으나 실사용은 **341건 / `raw/*.md` 356건 (96%)** 이었다(측정 2026-08-17, `grep -l '^compiled_date:' raw/*.md`). **새 필드를 만든 것이 아니라 341건의 기존 실사용을 규격에 옮겨 적은 것이다** — `§새 필드 금지` 와 충돌하지 않는다. 사본(`.claude/commands/ingest.md`·`raw/_templates/raw-template.md`)에는 있고 정본에만 없던 필드였으므로, **발산의 방향이 한쪽이 아니었다**는 실례이기도 하다.
+
+### 수집 이유 — `note` 첫 줄 (2026-11-08 신설)
+
+`ingested_date` 가 2026-11-09 이후인 raw 는 `note` 첫 줄을 `수집 이유: <내용>` 으로 쓴다. 내용은 «이 자료로 무엇을 하려는가» 한 줄이다. 수집 경로·대조 기록은 둘째 줄부터 쓴다.
+
+- 예: `수집 이유: AWS KMS 페이지의 «키 삭제 대기 기간» 빈칸을 공식 문서로 채우려고.`
+- 왜: 2026-11 raw 108건 모두 `note` 가 있었지만 내용은 출처 기록이었다. «최근 ingest 가 무분별했다» 는 평가를 수로 판정할 수 없었다(`output/answer-20261108-0242.md` §3). 사용자 결정 2026-11-08.
+- 강제: `scripts/check-raw-structure.py` ⓓ 가 검사한다(`uv run -q --with pyyaml python3 scripts/check-raw-structure.py`). 기준일 전 raw 는 고치지 않는다.
+- 판단으로 남는 부분: 이유가 «구체적인가» 는 검사기가 보지 않는다. 다음 달 판정 때 사람이 본다.
 
 ### `verbatim` — 원문 보존 여부 (2026-08-04 신설)
 
