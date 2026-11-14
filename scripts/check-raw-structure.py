@@ -8,6 +8,13 @@
 
 네 항목을 본다 — 전부 기계 판정이다.
 
+경고 2종(위반 아님, 종료 코드에 영향 없음) — 원장 #104, `.claude/rules/wiki-concepts.md`
+§AI 생성 정황 출처의 판정 등급. 적중은 판정이 아니라 **사람이 그 줄을 읽을 후보**다.
+  S2 생성 도구 잔재 — `utm_source=chatgpt.com`·`oaicite`·`contentReference[`·`turnNsearchN`·`【N†`
+  S3 뜻을 확인하지 못한 식별자 줄 — 본문에 단독으로 선 12~40자리 소문자 16진 문자열(숫자·문자 섞임)
+  실측(2026-11-10, raw 1288건): S2 2파일(LLM 명시 1 · 참고 링크 1개만 ChatGPT 경유 1) · S3 1파일.
+  S1(챗봇식 후속 제안 말투)은 넣지 않았다 — 같은 실측에서 오탐 2/4.
+
   ⓐ 닫는 `---` 실재
   ⓑ 본문 길이 0 아님
   ⓒ 정본 YAML 파서로 frontmatter 파싱 성공
@@ -41,6 +48,8 @@ RAW = os.path.join(ROOT, "raw")
 REASON_SINCE = "2026-11-09"
 REASON_PREFIX = "수집 이유:"
 FM = re.compile(r"\A---\n(.*?)\n---(?:\n|\Z)", re.S)
+AI_S2 = re.compile(r"utm_source=chatgpt\.com|oaicite|contentReference\[|\bturn\d+(?:search|view|news|fetch)\d+\b|【\d+†")
+AI_S3 = re.compile(r"(?=[0-9a-f]*[a-f])(?=[0-9a-f]*\d)[0-9a-f]{12,40}")
 
 try:
     import yaml
@@ -65,6 +74,20 @@ def reason_violation(meta):
     if not first.startswith(REASON_PREFIX) or not first[len(REASON_PREFIX):].strip():
         return f"ⓓ `note` 첫 줄이 `{REASON_PREFIX} <내용>` 이 아니다 (ingested_date {d} ≥ {REASON_SINCE})"
     return None
+
+
+def ai_signals(text):
+    """경고 S2·S3 — [(줄번호, 신호, 줄 앞부분)]. 줄번호는 파일 기준. 위반이 아니다(원장 #104)."""
+    m = FM.match(text)
+    start = text[:m.end()].count("\n") if m else 0
+    body = text[m.end():] if m else text
+    hits = []
+    for i, line in enumerate(body.split("\n"), start + 1):
+        if AI_S2.search(line):
+            hits.append((i, "S2 생성 도구 잔재", line.strip()[:80]))
+        if AI_S3.fullmatch(line.strip()):
+            hits.append((i, "S3 뜻을 확인하지 못한 식별자 줄", line.strip()))
+    return hits
 
 
 def check(path):
@@ -100,17 +123,27 @@ def main():
     verbose = "--verbose" in sys.argv
     files = sorted(glob.glob(os.path.join(RAW, "**", "*.md"), recursive=True))
     violations = []
+    warnings = []
     with_fm = 0
     for p in files:
         bad, has_fm = check(p)
         with_fm += has_fm
         for b in bad:
             violations.append((os.path.relpath(p, ROOT), b))
+        with open(p, encoding="utf-8") as f:
+            for hit in ai_signals(f.read()):
+                warnings.append((os.path.relpath(p, ROOT),) + hit)
 
     if verbose:
         print(f"검사 대상 `raw/**/*.md`: {len(files)}건")
         print(f"  └ frontmatter 보유: {with_fm}  · 없음: {len(files) - with_fm} (판정 제외)")
         print(f"검사 항목: ⓐ 닫는 `---` · ⓑ 본문 길이 · ⓒ 정본 YAML 파싱 · ⓓ 수집 이유(ingested_date ≥ {REASON_SINCE})")
+        print()
+
+    if warnings:
+        print(f"⚠ 경고 {len(warnings)}건 (위반 아님 — AI 생성 정황 후보, 사람이 줄을 읽고 판정한다. 원장 #104)")
+        for path, ln, sig, line in warnings:
+            print(f"  {path}:{ln}  {sig}  «{line}»")
         print()
 
     if violations:

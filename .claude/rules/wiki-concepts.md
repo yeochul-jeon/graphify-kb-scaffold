@@ -52,6 +52,27 @@ paths:
 >
 > 관행이 먼저였고 이 절은 그것을 명문화한 것이다: `source_backed`+`ai_synthesis` 조합은 결정 이전에 이미 `strangler-fig-pattern`·`claude-code-configuration-strategy`·`lightrag-nano-graphrag` 3건이 쓰고 있었다. 유일한 이탈이던 `louvain-rag-context-precision`(출처는 `raw/` 2건인데 `inferred`)은 같은 커밋에서 `source_backed` 로 교정했다.
 
+##### AI 생성 정황 출처의 판정 등급 (2026-11-10 사용자 결정, 원장 #104 ①)
+
+출처가 LLM 답변을 옮긴 것일 때 위 두 필드를 어떻게 둘지 정한다. 신호와 등급을 나눠 본다.
+
+| 신호 | 예 | 판정 수단 |
+|---|---|---|
+| S1 대화 상대에게 하는 후속 제안 말투(본문 끝) | «필요하면 … 말해줘 / 보여줄게», «If you want, I can» | 사람만. 정규식 오탐 2/4(2026-11-10 실측)라 검사기에 넣지 않는다 |
+| S2 생성 도구 잔재 | `utm_source=chatgpt.com`, `oaicite`, `turnNsearchN` | `scripts/check-raw-structure.py` 경고 |
+| S3 뜻을 확인하지 못한 식별자 줄 | 본문에 단독으로 선 16진 문자열 줄 | `scripts/check-raw-structure.py` 경고 |
+| S4 저자·수집자 고지 | raw `author:` 또는 본문에 «ChatGPT 답변» | 사람 |
+
+| 등급 | 조건 | 처리 |
+|---|---|---|
+| ⓐ 명시 | S4 — 저자나 raw frontmatter 가 LLM 생성을 밝힌다 | raw `author:` 에 «LLM 생성» 을 적는다. 그 raw **만** 근거인 주장이 본문의 주가 되면 `claim_status: unverified`. 다른 출처와 합성한 페이지면 `source_backed` + `evidence_level: ai_synthesis` |
+| ⓑ 정황 | S1~S3 중 하나 이상이 걸리고, 사람이 그 줄을 읽어 정황으로 판단했다 | `claim_status` 는 파생 규칙대로 둔다. `confidence: low`. 페이지 §한계에 정황과 raw 줄번호를 적는다. raw `note:` 에 기록한다(기존 줄에 덧붙여 줄 수를 바꾸지 않는다). 수치·사례·고유명사는 «글이 쓴다» 로 귀속한다. 1차 문서가 있으면 대조 절을 붙인다 |
+| ⓒ 해당 없음 | 신호가 없거나, 걸렸지만 사람이 오탐으로 판단했다 | 현행 그대로 |
+
+- 🔴 **신호 적중은 판정이 아니라 선별이다.** 검사기 경고는 종료 코드를 바꾸지 않는다. 판정은 사람이 걸린 줄을 읽고 내린다. 예: S2 가 걸린 `raw/channeltech-user-table-100x-traffic-refactoring-part1.md` 는 참고 링크 1개만 ChatGPT 를 거쳤고 글은 사람이 썼다 → ⓒ.
+- ⚠️ **ⓑ 에서 `unverified` 를 쓰지 않는 이유**: 정황은 확인할 수 없는 추정이다. 추정만으로 `claim_status` 를 바꾸면 그 값이 `sources` 구성에서 재현되지 않는다(위 §두 필드의 역할 분담). 낮은 신뢰는 `confidence` 와 §한계에 남긴다.
+- 선례: ⓑ — [[palantir-ontology-object-link-action]](S1·S3, 공식 문서 대조 절 추가). ⓐ 에 해당하는 기존 페이지 중 처리가 엇갈린 것(`unverified` 5쪽 대 `source_backed`+`ai_synthesis` 1쪽)의 정렬은 원장 #104 ③ 으로 남아 있다.
+
 ##### 🔴 `source_backed` 는 이름이 파생 규칙보다 강하게 주장한다 (2026-08-09 명시, 사람 결정)
 
 **이 값은 *"본문이 출처로 뒷받침된다"* 가 아니라 *"`sources` 에 `output/` 아닌 항목이 있다"* 를 뜻한다.** 위 분담이 그렇게 설계돼 있으나 **필드 이름이 그것을 배신한다** — 읽는 쪽이 뒷받침 여부로 오독한다.
