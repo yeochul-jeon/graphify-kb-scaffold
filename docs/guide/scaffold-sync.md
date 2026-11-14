@@ -114,20 +114,21 @@ sequenceDiagram
 | `raw/_templates/` | dir (--delete) | ingest 템플릿 |
 | `.claude/settings.json` | file | 프로젝트 Claude Code 설정 |
 | `.githooks/pre-commit` | file | pre-commit 훅 |
-| `.claudeignore` / `.graphifyignore` | file | 스캔 제외 패턴 |
+| `.claudeignore` / `.graphifyignore` | file | `.claudeignore`: 자동으로 읽지 않는 경로 목록(관례 — Claude Code 에서 효과 없음, 강제는 `permissions.deny`) · `.graphifyignore`: 그래프 인덱싱 제외 패턴 |
 | `CLAUDE.md` | file | LLM 행동 지침 |
 | `docs/architecture.md` / `docs/tutorial.md` / `docs/obsidian-setup.md` | file | 공유 문서 |
-| `scripts/*.sh` (13개, self-sync 포함) | file | 운영 스크립트 |
-| `scripts/*.py` (19개) | file | lint·backlinks·graph 재빌드 등 위 자산이 호출하는 파이썬 스크립트 |
+| `scripts/*.sh` (14개, self-sync 포함) | file | 운영 스크립트 |
+| `scripts/*.py` (23개) | file | lint·backlinks·graph 재빌드 등 위 자산이 호출하는 파이썬 스크립트. `check-raw-structure.py`·`test_check_raw_structure.py` 는 2026-11-08 `raw-ingest.md` §수집 이유 와 함께 편입 |
 
-전파 대상은 **`scripts/` 36개 중 32개**다. 개별 `file:` 항목으로 등재하며 `dir:scripts` 로 뭉치지 않는다 — `--delete` 가 scaffold 전용 `regen-graphify-skill.sh` 를 지운다.
+전파 대상은 **`scripts/` 의 `.py`·`.sh` 44개 중 37개**다(`ls scripts` 와 `sync-scaffold.sh` 의 `file:scripts/` 항목 대조, 2026-11-14). 개별 `file:` 항목으로 등재하며 `dir:scripts` 로 뭉치지 않는다 — `--delete` 가 scaffold 전용 `regen-graphify-skill.sh` 를 지운다.
 
-전파되지 않는 4개:
+전파되지 않는 7개:
 
 | 파일 | 이유 |
 |------|------|
 | `check-mirrors.py` | scaffold 에 `.agents/`·`.codex/` 가 없어 「선언된 미러 루트 부재」 로 무조건 실패한다 (2026-08-19). 전파하려면 「미러 자산 0건이면 통과」 분기가 필요하며 별건이다. preflight 의 `EXEMPT_REFS` 에 등재돼 있다 |
-| `check-raw-structure.py` / `compare-raw-source.py` / `test_check_extraction_chunks.py` | 어떤 전파 자산도 호출하지 않는다 (포함 기준 미달) |
+| `compare-raw-source.py` / `test_check_extraction_chunks.py` | 어떤 전파 자산도 호출하지 않는다 (포함 기준 미달) |
+| `status.sh` / `search-eval.py` / `test_search_eval.py` / `test_push_log_hook.py` | 제외 이유 기록 없음 (2026-11-14 대조에서 확인) |
 
 ### 제외 (denylist)
 

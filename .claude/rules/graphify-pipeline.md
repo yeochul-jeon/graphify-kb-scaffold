@@ -16,7 +16,7 @@ paths:
 - `graphify-out/cache/**` — **절대 금지**
 - `graphify-out/_logs/*`
 
-> `.claudeignore` 는 Glob/Grep 결과를 차단하지 않으므로 **이 규칙으로 대체**.
+> `.claudeignore` 는 Claude Code 에서 효과가 없어(공식 문서 `permissions.md`) Glob/Grep 결과를 차단하지 않으므로 **이 규칙으로 대체**. 강제하려면 `permissions.deny` 를 쓴다.
 > 파일 내용을 알아야 하면 우선 담당자에게 확인하거나, 스크립트로 파싱할 것.
 
 ## 읽기 순서
@@ -39,7 +39,7 @@ paths:
 ## Python 호출
 
 - **필수 경유**: `scripts/graphify-py.sh -c "<code>"` 또는 `-m graphify`
-- **금지**: `python3`, `python` 직접 호출 (pipx venv 경로가 아님)
+- **금지**: graphify 패키지가 필요한 호출(`-m graphify`, `import graphify` 하는 코드)을 `python3`, `python` 으로 직접 하는 것 (pipx venv 경로가 아님). graphify 를 import 하지 않는 `scripts/*.py` 검사기를 `AGENTS.md`·`lint.md` 가 `python3 scripts/...` 로 지시하는 것은 이 금지의 대상이 아니다
 
 ## 파이프라인 명령 (권장: wrapper 사용)
 

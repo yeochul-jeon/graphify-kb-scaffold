@@ -11,11 +11,12 @@ output/
 *.gif
 *.pdf
 
-# 첨부 파일 — 원천소스 보존용(raw/attachments 단일 위치). 명시적 요청 시에만 경로 지정해 읽기
+# 첨부 파일 — 원천소스 보존용(raw/attachments 단일 위치). 명시적 요청 시에만 경로 지정해 읽기(관례)
+# ⚠️ 이 파일은 Claude Code 에서 효과가 없다(공식 문서 permissions.md «it has no effect»). 강제하려면 permissions.deny 의 Read 규칙을 쓴다.
 raw/attachments/
 
-# Web Clipper 캡처 인박스 (미처리 클립) — 무프롬프트 스캔만 막는다.
-# 명시 경로 읽기는 통과하므로 `/ingest raw/Clippings/<파일>` 승격은 그대로 작동한다.
+# Web Clipper 캡처 인박스 (미처리 클립) — 자동으로 읽지 않는다(관례, 이 파일이 막지는 않는다).
+# `/ingest raw/Clippings/<파일>` 처럼 경로를 지정한 승격은 그대로 작동한다.
 # 규정: .claude/rules/raw-ingest.md §Web Clipper 인박스
 raw/Clippings/
 

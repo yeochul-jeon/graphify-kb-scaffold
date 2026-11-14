@@ -2,10 +2,10 @@
 # .work-log/last-session.md 에 세션 상태 체크포인트를 기록한다.
 # Usage:
 #   scripts/save-checkpoint.sh <trigger> [note]
-#     trigger: pre-compact | session-end | manual
+#     trigger: pre-compact | post-bash | session-end | manual
 #     note   : optional free-form note
 #
-# PreCompact hook 에서 자동 호출되며, SessionStart 에서 이 파일을 읽어 컨텍스트를 복원한다.
+# PreCompact hook 과 Bash 실행 뒤 PostToolUse hook(trigger post-bash)에서 자동 호출되며, SessionStart 에서 이 파일을 읽어 컨텍스트를 복원한다.
 set -euo pipefail
 
 # 저장소 루트를 고정한다 (원장 #37). 없으면 `.work-log/` 와 아래 git 조회가

@@ -102,7 +102,7 @@ B=$(git log -1 --format=%H -- 'output/lint-report-*')   # 직전 lint 보고서�
 - PLACEHOLDER 제외 집합은 `scripts/wiki_scan.py` 의 `PLACEHOLDER` 를 `import` 해 쓴다(`rebuild-backlinks.py` 도 같은 정본을 쓴다).
 - **`--fix` 시**: 수정 불가 (사람이 판단 필요), 보고서에만 표시
 
-> `scripts/rebuild-cross-edges.py` 도 `스킵: 미작성 개념 링크 N` 을 출력하지만 **정의가 다르다** — `## 관련 개념` 절에 한정한 (출처파일→미작성대상) 쌍 수다(`:37` `SEC`, `:98`). 이 점검 #1 의 값과 달라도 오류가 아니다.
+> `scripts/rebuild-cross-edges.py` 도 `스킵: 미작성 개념 링크 N` 을 출력하지만 **정의가 다르다** — `## 관련 개념` 절에 한정한 (출처파일→미작성대상) 쌍 수다(`:40` `SEC`, `:127`). 이 점검 #1 의 값과 달라도 오류가 아니다.
 
 ### 2. 고아 파일 탐지
 
@@ -437,7 +437,7 @@ done
   - 소스 갱신 권고 메시지
 - **`--fix` 불가**: 사람이 새 자료를 수집해야 함
 
-### 13. CLAUDE.md 프론트매터 준수 점검
+### 13. 프론트매터 준수 점검 (`.claude/rules/wiki-concepts.md` §파일 규칙)
 
 - 대상: `wiki/concepts/` 및 `wiki/topics/` 아래 모든 `.md` 파일
 - 필수 프론트매터 필드 7개 존재 여부 확인:
@@ -450,7 +450,7 @@ done
 - 대상: wiki/concepts/ 및 wiki/topics/ 아래 모든 `.md` 파일
 - 선택 필드: claim_status, evidence_level, last_verified, review_due
 - 누락은 WARN으로만 보고한다. `--fix`로 자동 추가하지 않는다.
-- 누락이 보고되면 신규 생성분이므로 `scripts/attach-claim-metadata.py` 로 소급 부착한다 (`--dry-run` 기본, 파생 규칙은 `.claude/rules/wiki-concepts.md` §부착 도구와 파생 규칙).
+- 누락이 보고되면 신규 생성분이므로 `scripts/attach-claim-metadata.py` 로 소급 부착한다 (인자 없이 돌리면 dry-run, 쓰기는 `--apply`, 파생 규칙은 `.claude/rules/wiki-concepts.md` §부착 도구와 파생 규칙).
 - ⚠️ **`evidence_level` 값의 타당성은 이 점검의 범위가 아니다.** `primary` 인지 `secondary` 인지는 본문-출처 정합을 읽어야 판정되며(도메인으로 판정 금지 — aws 인용 8건 중 primary 0건이었다), lint 는 **열거값 위반만** 본다.
 - 잘못된 enum 값은 WARN으로 보고한다.
 - ✅ **열거값은 `scripts/wiki_scan.py` 의 `claim_enums(rules_text)` 로 «읽는다» — 하드코딩·발명 금지** (2026-08-19 신설, 원장 #64-b)
@@ -491,7 +491,7 @@ Required file shape:
 
 - **2026-08-12 (세션 35차) — generator 구현됨.** `python3 scripts/generate-source-ledger.py`(또는 `--check`)가 `wiki/_meta/source-ledger.md` 를 `raw/**/*.md` 전건 + `wiki/concepts`·`wiki/topics` 의 `sources` 역참조로 생성한다. **손으로 편집하지 않는다** — 재실행하면 덮어쓴다.
 - `sources:` 는 인라인 `[...]` 과 YAML 블록 리스트 두 표기를 모두 파싱한다(파싱 안 하면 블록 표기 파일이 "출처 없음"으로 오판된다 — `wiki-concepts.md` 경고).
-- `--check` 는 낡았으면 exit 1. `graphify-build.sh` 에는 아직 넣지 않았다(초안 단계 — 매 빌드마다 340+행을 갱신하는 비용 대 이득을 다음 회차가 판단).
+- `--check` 는 낡았으면 exit 1. `scripts/graphify-build.sh` 가 기본 모드 빌드마다 재생성한다(«source-ledger.md 재생성» 단계, `--cluster-only` 에서는 돌지 않음).
 - `wiki/concepts/` 및 `wiki/topics/` 아래 모든 `.md` 파일에서 frontmatter `sources` 필드 누락을 보고하는 것은 별도(기존 점검 #5 가 담당, 중복 구현 안 함).
 - section-level source list는 권장 정책이며 기존 파일의 즉시 마이그레이션을 강제하지 않는다.
 

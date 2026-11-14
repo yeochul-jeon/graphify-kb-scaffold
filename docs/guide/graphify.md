@@ -363,11 +363,11 @@ graphify 스킬은 **repo-local 사본만** 쓴다. 사용처 3곳은 각자 사
 `Run 'graphify install' to update` 경고를 띄운다(0.9.68 `__main__.py:594-600` `_silent_cmds`) → 프로젝트 규칙이
 강제하는 `graphify-build.sh`(내부적으로 `graphify update`)마다 경고가 뜸 → 지시대로 실행 → 전역 부활.
 
-방어선 3중:
+방어선 3중으로 설계했으나, 현재 이 PC 에서 동작하는 것은 1번(전역 스킬 없음)뿐이다. 2·3번 훅은 없다(2026-11-14 확인: `~/.claude/hooks/` 에 차단 훅 파일 없음, `~/.claude/settings.json` 에 `block-global-graphify`·`skills/graphify` 0건).
 1. **원인 제거** — 전역 스킬(`~/.claude/skills/graphify/`)을 두지 않는다. CLI 의 버전 경고는 전역 스킬 경로의 `.graphify_version` 만 대조하므로(`graphify/__main__.py` `_check_skill_version`), 전역 스킬이 없으면 포크 버전과 무관하게 경고가 뜨지 않는다.
-2. **차단** — 전역 `~/.claude/hooks/block-global-graphify-install.sh` (PreToolUse/Bash).
+2. **차단** — 전역 `~/.claude/hooks/block-global-graphify-install.sh` (PreToolUse/Bash). **(이 PC 에 없음)**
    `--project`·`--help`·`-h` 없는 `graphify install` 을 exit 2 로 막는다.
-3. **탐지** — 전역 SessionStart 훅이 `~/.claude/skills/graphify` 존재 시 경고한다.
+3. **탐지** — 전역 SessionStart 훅이 `~/.claude/skills/graphify` 존재 시 경고한다. **(이 PC 에 없음)**
    터미널에서 직접 친 경우처럼 (2)가 못 보는 경로를 잡는다.
 
 ### upstream 버전 추적 · 재포크 절차
