@@ -110,6 +110,7 @@ sequenceDiagram
 | `.claude/commands/` | dir (--delete) | 슬래시 커맨드 명세 전체 |
 | `.claude/rules/` | dir (--delete) | scaling 등 LLM 운영 규칙 |
 | `.claude/skills/graphify/` | dir (--delete) | graphify 스킬 오버라이드 |
+| `.claude/skills/ledger/` | dir (--delete) | `/ledger` 적용 원장 스킬 (2026-11-18). 원장 파일 `output/apply-ledger.md` 는 전파하지 않고 저장소마다 만든다 |
 | `docs/guide/` | dir (--delete) | commands / graphify / troubleshooting / scaffold-sync / ai-memory-stack / wiki-schema |
 | `raw/_templates/` | dir (--delete) | ingest 템플릿 |
 | `.claude/settings.json` | file | 프로젝트 Claude Code 설정 |

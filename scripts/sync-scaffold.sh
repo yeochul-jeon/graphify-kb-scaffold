@@ -46,6 +46,8 @@ SYNC_ITEMS=(
   "dir:.claude/commands"
   "dir:.claude/rules"
   "dir:.claude/skills/graphify"
+  # /ledger 적용 원장 스킬 — 2026-11-18 신설. 원장 파일(output/apply-ledger.md)은 저장소마다 따로 둔다.
+  "dir:.claude/skills/ledger"
   "dir:docs/guide"
   "dir:raw/_templates"
   "file:.claude/settings.json"
