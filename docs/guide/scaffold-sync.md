@@ -107,6 +107,7 @@ sequenceDiagram
 
 | 항목 | 방식 | 설명 |
 |------|------|------|
+| `.claude/agents/` | dir (--delete) | 서브에이전트 정의. `compile-auditor`(`/compile` Step 3.6 충실도 감사, 2026-11-18) |
 | `.claude/commands/` | dir (--delete) | 슬래시 커맨드 명세 전체 |
 | `.claude/rules/` | dir (--delete) | scaling 등 LLM 운영 규칙 |
 | `.claude/skills/graphify/` | dir (--delete) | graphify 스킬 오버라이드 |

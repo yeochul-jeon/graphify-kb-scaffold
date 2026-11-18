@@ -43,6 +43,8 @@ SOURCE_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null \
 #   dir  → rsync -a --delete (하위 완전 미러링)
 #   file → rsync -a          (단건 복사)
 SYNC_ITEMS=(
+  # /compile Step 3.6 충실도 감사 서브에이전트 정의 — 2026-11-18 신설. compile.md 가 subagent_type 으로 부른다.
+  "dir:.claude/agents"
   "dir:.claude/commands"
   "dir:.claude/rules"
   "dir:.claude/skills/graphify"
