@@ -43,6 +43,8 @@ note: |                           # 필수 (2026-11-09 이후) — 첫 줄은 `�
 > **2026-07-27 정정**: 이 절은 원래 `source:` / `captured:` 를 규정했으나 실제 사용은 `source_url:` 279건(96%) · `ingested_date:` 279건(96%) 대 `source:` 12건(4%) 였다 (`raw/*.md` frontmatter 보유 291건 기준). 규격을 실사용에 맞춰 정정했다. 기존 12건은 소급 변경하지 않는다.
 
 > **2026-08-17 정정 — `compiled_date` 기재.** 같은 유형이다. 이 블록에 `compiled_date` 가 없었으나 실사용은 **341건 / `raw/*.md` 356건 (96%)** 이었다(측정 2026-08-17, `grep -l '^compiled_date:' raw/*.md`). **새 필드를 만든 것이 아니라 341건의 기존 실사용을 규격에 옮겨 적은 것이다** — `§새 필드 금지` 와 충돌하지 않는다. 사본(`.claude/commands/ingest.md`·`raw/_templates/raw-template.md`)에는 있고 정본에만 없던 필드였으므로, **발산의 방향이 한쪽이 아니었다**는 실례이기도 하다.
+>
+> **2026-11-18 — 키 강제.** ingest 때 `compiled_date: null` 줄을 빼면 `/compile` 이 새 줄로 넣어 본문 줄번호가 +1 밀리고 이미 적은 `raw:N` 인용이 어긋난다(같은 날 인용 17개 보정). `scripts/check-raw-structure.py` ⓔ 가 `ingested_date` ≥ 2026-11-19 인 raw 에 이 키가 있는지 검사한다(값 `null` 허용). 기준일 전 14건은 고치지 않는다.
 
 ### 수집 이유 — `note` 첫 줄 (2026-11-08 신설)
 

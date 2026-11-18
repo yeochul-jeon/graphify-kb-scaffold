@@ -6,7 +6,7 @@
 블록 스칼라에 삼켜졌고, 파일은 여전히 유효해 보였으며 **어느 검사기도 잡지 못했다.**
 발견 경로가 우연이었다(대조 수치가 이상해서 파서를 의심하다 나왔다).
 
-네 항목을 본다 — 전부 기계 판정이다.
+다섯 항목을 본다 — 전부 기계 판정이다.
 
 경고 2종(위반 아님, 종료 코드에 영향 없음) — 원장 #104, `.claude/rules/wiki-concepts.md`
 §AI 생성 정황 출처의 판정 등급. 적중은 판정이 아니라 **사람이 그 줄을 읽을 후보**다.
@@ -21,6 +21,10 @@
   ⓓ `ingested_date` 가 REASON_SINCE 이후면 `note` 첫 줄이 `수집 이유: <내용>`
      (2026-11-08 사용자 결정 «ingest 제안 ① 채택 + 검사기». 그 전 raw 는 고치지 않으므로
      대상에서 뺀다. 목적: «ingest 가 무분별했는가» 를 다음 달에 수로 판정하려고)
+  ⓔ `ingested_date` 가 COMPILED_DATE_SINCE 이후면 frontmatter 에 `compiled_date:` 키가 있다(값 null 허용)
+     (2026-11-18 사용자 결정. ingest 때 이 줄을 빼면 /compile 이 새 줄로 넣어 본문 줄번호가
+     +1 밀리고, 이미 적은 `raw:N` 인용이 전부 어긋난다 — 같은 날 SF 인용 17개 보정.
+     기준일 전 raw 14건은 고치지 않으므로 대상에서 뺀다)
 
 🔴 **ⓐ·ⓑ 는 #52 를 잡지 못한다. ⓒ 만 잡는다.** 2026-08-09 에 커밋 `2c3d4b2` 의
 실제 파손본으로 확인했다 — 본문의 수평선(`---`)이 닫는 구분자 노릇을 해 ⓐ 가 통과했고,
@@ -47,6 +51,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RAW = os.path.join(ROOT, "raw")
 REASON_SINCE = "2026-11-09"
 REASON_PREFIX = "수집 이유:"
+COMPILED_DATE_SINCE = "2026-11-19"
 FM = re.compile(r"\A---\n(.*?)\n---(?:\n|\Z)", re.S)
 AI_S2 = re.compile(r"utm_source=chatgpt\.com|oaicite|contentReference\[|\bturn\d+(?:search|view|news|fetch)\d+\b|【\d+†")
 AI_S3 = re.compile(r"(?=[0-9a-f]*[a-f])(?=[0-9a-f]*\d)[0-9a-f]{12,40}")
@@ -61,13 +66,30 @@ except ImportError:
     sys.exit(2)
 
 
-def reason_violation(meta):
-    """ⓓ — 위반 문구 하나 또는 None. meta 는 파싱된 frontmatter dict."""
+def ingested_on_or_after(meta, since):
+    """`ingested_date` 가 since 이후인 날짜면 그 날짜, 아니면 None."""
     if not isinstance(meta, dict):
         return None
     d = str(meta.get("ingested_date") or "")[:10]
     # 날짜 형식이 아니면(템플릿의 `YYYY-MM-DD` 등) 판정하지 않는다 — 문자열 비교로 'Y' > '2' 가 된다
-    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", d) or d < REASON_SINCE:
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", d) or d < since:
+        return None
+    return d
+
+
+def compiled_date_violation(meta):
+    """ⓔ — 위반 문구 하나 또는 None. 값이 null 이어도 키만 있으면 통과."""
+    d = ingested_on_or_after(meta, COMPILED_DATE_SINCE)
+    if d and "compiled_date" not in meta:
+        return (f"ⓔ `compiled_date:` 키가 없다 — ingest 때 `compiled_date: null` 을 둬야 "
+                f"/compile 이 줄을 늘리지 않는다 (ingested_date {d} ≥ {COMPILED_DATE_SINCE})")
+    return None
+
+
+def reason_violation(meta):
+    """ⓓ — 위반 문구 하나 또는 None. meta 는 파싱된 frontmatter dict."""
+    d = ingested_on_or_after(meta, REASON_SINCE)
+    if not d:
         return None
     note = meta.get("note")
     first = next((l.strip() for l in str(note or "").splitlines() if l.strip()), "")
@@ -113,9 +135,9 @@ def check(path):
         first = str(e).strip().splitlines()[0]
         bad.append(f"ⓒ YAML 파싱 실패 — {type(e).__name__}: {first}")
         return bad, True
-    r = reason_violation(meta)
-    if r:
-        bad.append(r)
+    for r in (reason_violation(meta), compiled_date_violation(meta)):
+        if r:
+            bad.append(r)
     return bad, True
 
 
@@ -137,7 +159,7 @@ def main():
     if verbose:
         print(f"검사 대상 `raw/**/*.md`: {len(files)}건")
         print(f"  └ frontmatter 보유: {with_fm}  · 없음: {len(files) - with_fm} (판정 제외)")
-        print(f"검사 항목: ⓐ 닫는 `---` · ⓑ 본문 길이 · ⓒ 정본 YAML 파싱 · ⓓ 수집 이유(ingested_date ≥ {REASON_SINCE})")
+        print(f"검사 항목: ⓐ 닫는 `---` · ⓑ 본문 길이 · ⓒ 정본 YAML 파싱 · ⓓ 수집 이유(ingested_date ≥ {REASON_SINCE}) · ⓔ compiled_date 키(ingested_date ≥ {COMPILED_DATE_SINCE})")
         print()
 
     if warnings:

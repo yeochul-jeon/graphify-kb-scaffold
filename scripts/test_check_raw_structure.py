@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""`check-raw-structure.py` ⓓ(수집 이유 첫 줄) 회귀 시험 — 2026-11-08 사용자 결정 «ingest 제안 ① 채택 + 검사기».
+"""`check-raw-structure.py` ⓓ(수집 이유 첫 줄)·ⓔ(compiled_date 키) 회귀 시험 — 2026-11-08 사용자 결정 «ingest 제안 ① 채택 + 검사기».
 경고 S2·S3(AI 생성 정황 후보) 시험 — 2026-11-10 사용자 결정, 원장 #104 ②.
 
 실행: `uv run -q --with pyyaml python3 scripts/test_check_raw_structure.py`  (exit 0 = 통과)
@@ -47,6 +47,33 @@ with tempfile.TemporaryDirectory() as d:
 expected_hits = sum(1 for _, _, w in CASES if w)
 assert expected_hits == 3, expected_hits
 print(f"{len(CASES) - fails}/{len(CASES)} 통과")
+
+# ⓔ compiled_date 키 (2026-11-18 사용자 결정) — (이름, frontmatter, ⓔ 위반이어야 하는가)
+E_AFTER, E_BEFORE = "2026-11-19", "2026-11-18"
+R = 'note: "수집 이유: 시험"'
+E_CASES = [
+    ("기준일 전·키 없음",          f"title: a\ningested_date: {E_BEFORE}\n{R}",                                  False),
+    ("기준일 이후·키 없음",        f"title: a\ningested_date: {E_AFTER}\ncompiled: false\n{R}",                  True),
+    ("기준일 이후·null",           f"title: a\ningested_date: {E_AFTER}\ncompiled: false\ncompiled_date: null\n{R}", False),
+    ("기준일 이후·빈 값",          f"title: a\ningested_date: {E_AFTER}\ncompiled: false\ncompiled_date:\n{R}",  False),
+    ("기준일 이후·날짜",           f"title: a\ningested_date: {E_AFTER}\ncompiled: true\ncompiled_date: {E_AFTER}\n{R}", False),
+    ("ingested_date 없음",         f"title: a\n{R}",                                                             False),
+]
+e_fails = 0
+with tempfile.TemporaryDirectory() as d:
+    for name, fm, want in E_CASES:
+        p = os.path.join(d, "x.md")
+        with open(p, "w", encoding="utf-8") as f:
+            f.write(FM(fm))
+        bad, has_fm = crs.check(p)
+        got = any(b.startswith("ⓔ") for b in bad)
+        other = [b for b in bad if not b.startswith("ⓔ")]
+        ok = has_fm and got == want and not other
+        print(("ok  " if ok else "FAIL"), "ⓔ", name, bad)
+        e_fails += not ok
+assert sum(1 for *_, w in E_CASES if w) == 1
+print(f"ⓔ {len(E_CASES) - e_fails}/{len(E_CASES)} 통과")
+fails += e_fails
 
 # 경고 S2·S3 (원장 #104) — (이름, 본문 한 줄, 기대 신호 접두 또는 None)
 AI_CASES = [
